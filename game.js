@@ -21,6 +21,29 @@
   let gameOver;
   let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
 
+  // 用意してもらったPNGは背景が透過ではなく、ほぼ白(#fdfdfd前後)のベタ塗りだったため、
+  // そのまま描画すると四角い縁が見えてしまう。読み込み時に左上のピクセルを背景色とみなし、
+  // それに近い色を透明化してから使う(色差がthreshold以内のピクセルをalpha:0にする)
+  const spriteBgRemoveThreshold = 18;
+  function stripBackground(img) {
+    const off = document.createElement("canvas");
+    off.width = img.naturalWidth;
+    off.height = img.naturalHeight;
+    const octx = off.getContext("2d");
+    octx.drawImage(img, 0, 0);
+    const imageData = octx.getImageData(0, 0, off.width, off.height);
+    const data = imageData.data;
+    const bgR = data[0], bgG = data[1], bgB = data[2];
+    for (let i = 0; i < data.length; i += 4) {
+      const dr = data[i] - bgR, dg = data[i + 1] - bgG, db = data[i + 2] - bgB;
+      if (Math.sqrt(dr * dr + dg * dg + db * db) <= spriteBgRemoveThreshold) {
+        data[i + 3] = 0;
+      }
+    }
+    octx.putImageData(imageData, 0, 0);
+    return off;
+  }
+
   // プレイヤーのドット絵スプライト(成長段階ごとに1枚、CONFIG.stagesと同じ並び)。
   // assets/配下に該当ファイルがない場合はnullのままになり、その段階は今まで通り四角形で描画される
   // (アセットが揃っていなくてもゲームが壊れないようにするため)
@@ -28,7 +51,7 @@
   const playerSprites = playerSpriteFiles.map(() => null);
   playerSpriteFiles.forEach((src, i) => {
     const img = new Image();
-    img.onload = () => { playerSprites[i] = img; };
+    img.onload = () => { playerSprites[i] = stripBackground(img); };
     img.onerror = () => { playerSprites[i] = null; };
     img.src = src;
   });
@@ -44,8 +67,8 @@
     const sprite = playerSprites[stageIndex];
     if (sprite) {
       if (flashColor) {
-        flashScratchCanvas.width = sprite.naturalWidth;
-        flashScratchCanvas.height = sprite.naturalHeight;
+        flashScratchCanvas.width = sprite.width;
+        flashScratchCanvas.height = sprite.height;
         flashScratchCtx.clearRect(0, 0, flashScratchCanvas.width, flashScratchCanvas.height);
         flashScratchCtx.drawImage(sprite, 0, 0);
         flashScratchCtx.globalCompositeOperation = "source-atop";
