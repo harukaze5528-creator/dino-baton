@@ -19,9 +19,9 @@ const CONFIG = {
   // (実際の速度 = difficulty.baseSpeed の世代ごとの値 × speedMultiplier。時間経過では加速しない)
   stages: [
     { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90, speedMultiplier: 0.5 },
-    { name: "CHICK", width: 20, height: 24, jumpPower: 14, color: "#333333", foodToGrow: 6, speedMultiplier: 0.7 },
-    { name: "JUVENILE", width: 28, height: 34, jumpPower: 11, color: "#333333", foodToGrow: 9, speedMultiplier: 1.0 },
-    { name: "ADULT", width: 38, height: 48, jumpPower: 8, color: "#333333", foodToGrow: 12, speedMultiplier: 1.3 },
+    { name: "CHICK", width: 16, height: 20, jumpPower: 14, color: "#333333", foodToGrow: 6, speedMultiplier: 0.7 },
+    { name: "JUVENILE", width: 22, height: 27, jumpPower: 11, color: "#333333", foodToGrow: 9, speedMultiplier: 1.0 },
+    { name: "ADULT", width: 30, height: 38, jumpPower: 8, color: "#333333", foodToGrow: 12, speedMultiplier: 1.3 },
   ],
 
   // 世代ごとの難易度カーブ。世代1は特別に短く・簡単にし、以降は世代が進むごとに
@@ -66,7 +66,7 @@ const CONFIG = {
       name: "TYRANNOSAURUS",
       color: "#3a2f2f",
       jumpMultiplier: 0.9,
-      sizeMultiplier: 1.15,
+      sizeMultiplier: 1.05,
       speedMultiplier: 0.95,
       yearsAgoStart: 68000000,
       yearsAgoEnd: 66000000,
@@ -88,7 +88,7 @@ const CONFIG = {
       name: "GASTORNIS",
       color: "#2f3a2f",
       jumpMultiplier: 0.85,
-      sizeMultiplier: 1.2,
+      sizeMultiplier: 1.05,
       speedMultiplier: 0.9,
       yearsAgoStart: 56000000,
       yearsAgoEnd: 40000000,
@@ -132,8 +132,8 @@ const CONFIG = {
 
   // 障害物
   obstacle: {
-    width: 20,
-    height: 30,
+    width: 16,
+    height: 24,
     color: "#555555",
   },
 
