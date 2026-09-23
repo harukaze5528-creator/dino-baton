@@ -17,6 +17,12 @@ const CONFIG = {
     parallax: 0.15,
   },
 
+  // 若い恐竜・大人の段階で、種専用の絵がない場合に使う走りアニメーション(run1.png/run2.png
+  // を交互に切り替えて走っているように見せる)。framesPerPoseは1つの絵を何フレーム表示するか
+  runAnimation: {
+    framesPerPose: 8,
+  },
+
   // キャラクター(四角形)
   player: {
     x: 80, // 初期位置

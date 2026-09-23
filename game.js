@@ -20,15 +20,16 @@
   let generationLog;
   let gameOver;
   let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
+  let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
 
-  // プレイヤーのドット絵スプライト(成長段階ごとに1枚、CONFIG.stagesと同じ並び)。
+  // プレイヤーのドット絵スプライト(卵・ヒナ。種専用の絵がない場合の共通フォールバック)。
   // assets/配下のPNGはあらかじめ背景を透過処理済み(制作ツール側の白いベタ塗り背景を
   // 透明化してある)。ここではgetImageDataなどのピクセル読み取りは一切行わない。
   // 理由: index.htmlをfile://で直接開いた場合、canvasからのピクセル読み取りは
   // ブラウザにセキュリティエラーとしてブロックされるため(ローカルサーバー経由でしか
   // 動かなくなってしまう)。該当ファイルがない/読み込みに失敗した場合はnullのままになり、
   // その段階は今まで通り四角形で描画される
-  const playerSpriteFiles = ["assets/egg.png", "assets/chick.png", "assets/juvenile.png", "assets/adult.png"];
+  const playerSpriteFiles = ["assets/egg.png", "assets/chick.png"];
   const playerSprites = playerSpriteFiles.map(() => null);
   playerSpriteFiles.forEach((src, i) => {
     const img = new Image();
@@ -37,9 +38,20 @@
     img.src = src;
   });
 
+  // 若い恐竜・大人の段階で、種専用の絵がない場合に使う走りアニメーション用の2枚
+  // (run1.png/run2.pngを交互に切り替えて走っているように見せる)
+  const runFrameFiles = ["assets/run1.png", "assets/run2.png"];
+  const runFrames = runFrameFiles.map(() => null);
+  runFrameFiles.forEach((src, i) => {
+    const img = new Image();
+    img.onload = () => { runFrames[i] = img; };
+    img.onerror = () => { runFrames[i] = null; };
+    img.src = src;
+  });
+
   // 種専用のドット絵。sprite(CONFIG.species[].sprite)は若い恐竜・大人の段階で使い、
   // chickSprite(CONFIG.species[].chickSprite)はヒナの段階で使う。指定がない種はnullの
-  // ままになり、共通のchick.png/juvenile.png/adult.pngが使われる
+  // ままになり、共通のchick.png/走りアニメーションが使われる
   function loadSpeciesSpriteMap(fieldName) {
     const map = {};
     CONFIG.species.forEach((species) => {
@@ -55,16 +67,20 @@
   const speciesSprites = loadSpeciesSpriteMap("sprite");
   const speciesChickSprites = loadSpeciesSpriteMap("chickSprite");
 
-  // 段階と種から描画に使うスプライトを決める。卵は種によらず常に共通の絵。ヒナ・
-  // 若い恐竜・大人は種専用の絵があればそれを使う(若い恐竜はCONFIG.stagesの小さい
-  // width/heightでそのまま描画されるので、結果的に同じ絵の縮小表示になる)
-  function spriteFor(stageIndex, species) {
+  // 段階と種から描画に使うスプライトを決める。卵は種によらず常に共通の絵。ヒナは種専用の
+  // 絵があればそれを使う。若い恐竜・大人は種専用の絵があればそれを使い(静止画のまま。
+  // CONFIG.stagesの小さいwidth/heightでそのまま描画されるので若い恐竜は縮小表示になる)、
+  // なければ共通の走りアニメーション(runFrameIndexで指定した側の絵)を使う
+  function spriteFor(stageIndex, species, runFrameIndex) {
     if (stageIndex === 1) {
       const chickSprite = speciesChickSprites[species.name];
       if (chickSprite) return chickSprite;
-    } else if (stageIndex >= 2) {
+      return playerSprites[1];
+    }
+    if (stageIndex >= 2) {
       const speciesSprite = speciesSprites[species.name];
       if (speciesSprite) return speciesSprite;
+      return runFrames[runFrameIndex] || runFrames[0];
     }
     return playerSprites[stageIndex];
   }
@@ -244,6 +260,12 @@
     generationLog = [];
     gameOver = false;
     retryCooldown = 0;
+    runAnimFrameCounter = 0;
+  }
+
+  // 走りアニメーション(run1.png/run2.png)のうち今どちらを表示するか(0か1)
+  function currentRunFrameIndex() {
+    return Math.floor(runAnimFrameCounter / CONFIG.runAnimation.framesPerPose) % 2;
   }
 
   function randomInterval(cfg) {
@@ -449,7 +471,7 @@
       width: player.width,
       height: player.height,
       color: currentColor(),
-      sprite: spriteFor(CONFIG.stages.length - 1, currentSpecies()), // 産卵時点(旧世代)の種の見た目を固定で使う
+      sprite: spriteFor(CONFIG.stages.length - 1, currentSpecies(), currentRunFrameIndex()), // 産卵時点(旧世代)の種の見た目を固定で使う
       pulseFrames: CONFIG.layPulse.frames, // 産んだ直後、一瞬つぶれてから元に戻る演出用
     });
 
@@ -579,6 +601,8 @@
     distanceMeters += currentSpeed * CONFIG.metersPerFrame;
 
     if (player.state === "active") {
+      runAnimFrameCounter++;
+
       // 卵は孵化タイマーのみ進める(産卵演出中の卵は updateLaying が孵化を管理する)
       if (currentStage().isEgg) {
         player.hatchTimer--;
@@ -729,7 +753,7 @@
       const hatchTimer = hatchFlashFramesRemaining();
       const fx = CONFIG.hatchEffect;
       const isFlashing = hatchTimer !== null && Math.floor(hatchTimer / fx.flashIntervalFrames) % 2 === 0;
-      drawCharacter(spriteFor(player.stageIndex, currentSpecies()), box.x, box.y, box.width, box.height, currentColor(), isFlashing ? fx.flashColor : null);
+      drawCharacter(spriteFor(player.stageIndex, currentSpecies(), currentRunFrameIndex()), box.x, box.y, box.width, box.height, currentColor(), isFlashing ? fx.flashColor : null);
     }
 
     // 障害物
