@@ -159,7 +159,7 @@ const CONFIG = {
   //   "platform" 上に乗れる。ダメージなし(足場としてground面を一時的に持ち上げる)
   //   "jumpable" 通常の障害物。ジャンプで避ける
   //   "overhead" 頭上の障害物。しゃがんで避ける(低い枝・天井と飛ぶ敵は仕組みが同じなので統一した)
-  //   "pit"      地上にいる時だけダメージ。ジャンプで飛び越える
+  //   "pit"      地面に針が埋まっている場所。地上にいる時だけダメージ(ジャンプで飛び越える)
   //   "chaser"   後ろ(画面左)から追いついてくる。追いつかれるとダメージ
   //   "flock"    飛ぶ敵(flyer)が何羽も壁のように連なって出現するが、一番下(地面際)は
   //              gapHeightの高さだけ必ず開けておく。しゃがめばどの種・成長段階でも通り抜けられる
@@ -170,7 +170,7 @@ const CONFIG = {
     { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
     { id: "boulder", behavior: "chaser", unlockGeneration: 2, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
     { id: "flyer", behavior: "overhead", unlockGeneration: 3, weight: 1.2, width: 20, height: 14, heightAboveGround: 18, color: "#4a4a6a" },
-    { id: "pit", behavior: "pit", unlockGeneration: 3, weight: 0.8, width: 40, color: "#000000" },
+    { id: "pit", behavior: "pit", unlockGeneration: 3, weight: 0.8, width: 40, height: 12, color: "#6a1a1a" },
     // segmentKind: 群れを構成する1羽あたりの見た目をどのkindから借りるか(flyerと共通にする)
     { id: "flock", behavior: "flock", unlockGeneration: 4, weight: 0.7, segmentKind: "flyer", gapHeight: 28, topMargin: 30 },
   ],

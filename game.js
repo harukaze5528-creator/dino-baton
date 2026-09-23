@@ -223,7 +223,7 @@
 
     const visual = obstacleVisual(kind);
     const width = visual.width;
-    const height = visual.height || CONFIG.groundHeight; // pitは高さ未指定なので地面の厚み分にする
+    const height = visual.height;
     let x;
     let y;
 
@@ -233,10 +233,8 @@
     } else if (kind.behavior === "overhead") {
       x = CONFIG.canvasWidth;
       y = groundY - kind.heightAboveGround - height; // 地面から少し浮いた高さ
-    } else if (kind.behavior === "pit") {
-      x = CONFIG.canvasWidth;
-      y = groundY; // 地面の帯を上から背景色で塗って穴に見せる
     } else {
+      // pit(針が埋まった地面)も含め、地面の上に乗る形で配置する
       x = CONFIG.canvasWidth;
       y = groundY - height;
     }
@@ -580,9 +578,9 @@
       ctx.fillRect(box.x, box.y, box.width, box.height);
     }
 
-    // 障害物(pitは背景色で塗って地面に穴が空いているように見せる)
+    // 障害物
     obstacles.forEach((o) => {
-      ctx.fillStyle = o.kind === "pit" ? currentSpecies().bgColor : o.color;
+      ctx.fillStyle = o.color;
       ctx.fillRect(o.x, o.y, o.width, o.height);
     });
 
