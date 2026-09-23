@@ -189,39 +189,15 @@ const CONFIG = {
     accelFrames: 50, // 0から次の世代のヒナの速度まで加速する時間
   },
 
-  // 隕石イベント: 最初の種(species[0]=ティラノサウルス)の最後の世代が終わるタイミングで、
-  // 産卵演出のhold(世代結果表示)の直後に挟む特別な演出。周回して再びこの遷移が来るたびに発生する
+  // 隕石イベント: 産卵演出のhold(世代結果表示)の直後に挟む特別な演出。2箇所で発生する
+  // (1) 最初の種(ティラノサウルス)の最後の世代が終わるタイミング(恐竜時代の終わり)
+  // (2) 最後から2番目の種(フォルスラコス)の最後の世代が終わるタイミング(→現代のニワトリへ)
+  // 周回して再びこれらの遷移が来るたびに、毎回発生する
   meteorEvent: {
     fallFrames: 60, // 隕石が画面右上から落ちてくる時間
     flashFrames: 20, // 着弾の閃光
     color: "#3a1a0a", // 隕石本体の色
     flashColor: "#fff3d0", // 着弾時に画面全体を覆う閃光の色
-  },
-
-  // エンディング: ニワトリ(最後の種)の最後の世代になると、通常の成長段階(卵→ヒナ→…)の代わりに
-  // このflightシーケンスに入る。ジャンプは羽ばたき(flap)になり、エサの代わりに流れてくる
-  // エンドロールの文字を避けながら進む。当たってもダメージはなく、点滅して知らせるだけ。
-  // flightDurationFrames が経過すると自動的に産卵演出(先祖返り)に入り、次のLOOPのティラノサウルスへ戻る
-  ending: {
-    flapPower: 9, // 羽ばたき1回で得られる上向きの力
-    gravity: 0.35, // 飛行中の重力(通常より弱め。羽ばたきで浮遊しやすくする)
-    flightSpeed: 6, // 飛行中のスクロール速度(固定)
-    flightDurationFrames: 600, // 飛行シーケンス全体の長さ(60fpsで約10秒)
-    hitFlashFrames: 30, // エンドロールの文字に触れたときの点滅時間
-    creditLineHeight: 18,
-    creditInterval: { minInterval: 50, maxInterval: 90 }, // エンドロールの行の出現間隔(フレーム数)
-    creditLines: [
-      "THANK YOU FOR PLAYING",
-      "GAME DESIGN & CODE",
-      "PROTOTYPE BY CLAUDE CODE",
-      "TYRANNOSAURUS",
-      "ASTERIORNIS",
-      "GASTORNIS",
-      "PHORUSRHACOS",
-      "CHICKEN",
-      "AND BACK AGAIN",
-      "SEE YOU NEXT LOOP",
-    ],
   },
 
   // エサ
