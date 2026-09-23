@@ -216,6 +216,11 @@
 
   function spawnObstacle() {
     const kind = pickObstacleKind();
+    if (kind.behavior === "flock") {
+      spawnFlock(kind);
+      return;
+    }
+
     const visual = obstacleVisual(kind);
     const width = visual.width;
     const height = visual.height || CONFIG.groundHeight; // pitは高さ未指定なので地面の厚み分にする
@@ -246,6 +251,26 @@
       color: visual.color,
       approachSpeedMultiplier: kind.approachSpeedMultiplier || 1,
     });
+  }
+
+  // 飛ぶ敵(flyer)を縦に何羽も並べて壁を作り、1箇所だけ大人でも通れる高さの隙間を空ける
+  function spawnFlock(kind) {
+    const segmentKind = CONFIG.obstacleKinds.find((k) => k.id === kind.segmentKind);
+    const visual = obstacleVisual(segmentKind);
+    const birdHeight = visual.height;
+
+    const spanTop = kind.topMargin;
+    const spanBottom = groundY;
+    const gapTop = spanTop + Math.random() * (spanBottom - spanTop - kind.gapHeight);
+    const gapBottom = gapTop + kind.gapHeight;
+    const x = CONFIG.canvasWidth;
+
+    for (let y = spanTop; y + birdHeight <= gapTop; y += birdHeight) {
+      obstacles.push({ kind: kind.id, behavior: "overhead", x, y, width: visual.width, height: birdHeight, color: visual.color });
+    }
+    for (let y = gapBottom; y + birdHeight <= spanBottom; y += birdHeight) {
+      obstacles.push({ kind: kind.id, behavior: "overhead", x, y, width: visual.width, height: birdHeight, color: visual.color });
+    }
   }
 
   function spawnFood() {

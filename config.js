@@ -153,25 +153,26 @@ const CONFIG = {
 
   // 障害物の種類。generationsPerSpecies(=4世代で次の種へ)に合わせて、最初の種の中で
   // 全種類が出そろうよう世代1→4で解禁する(unlockGeneration)。世代1:木の台のみ、
-  // 世代2:+トゲ・転がる岩、世代3:+低い枝・天井・穴、世代4:+飛ぶ敵・横から迫る敵。
+  // 世代2:+トゲ・転がる岩、世代3:+飛ぶ敵・穴、世代4:+群れ。
   // 解禁後は、解禁済みの種類の中から weight(重み)に応じてランダムに選ばれて出現する
   // behavior:
   //   "platform" 上に乗れる。ダメージなし(足場としてground面を一時的に持ち上げる)
   //   "jumpable" 通常の障害物。ジャンプで避ける
-  //   "overhead" 頭上の障害物。しゃがんで避ける(low ceiling / 飛ぶ敵)
+  //   "overhead" 頭上の障害物。しゃがんで避ける(低い枝・天井と飛ぶ敵は仕組みが同じなので統一した)
   //   "pit"      地上にいる時だけダメージ。ジャンプで飛び越える
   //   "chaser"   後ろ(画面左)から追いついてくる。追いつかれるとダメージ
-  //   "wall"     高くて跳べない。左右移動で避けるしかない
+  //   "flock"    飛ぶ敵(flyer)が何羽も壁のように連なって出現し、1箇所だけ隙間がある。
+  //              その隙間(gapHeight。大人でも通り抜けられる高さ)を狙ってジャンプ/しゃがみで通り抜ける
   // 見た目(width/height/color)は種ごとの obstacleVisuals で上書きできる。追加の順番・出現頻度・
   // 組み合わせ方はこの配列とdifficulty.obstacleIntervalで調整する
   obstacleKinds: [
     { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a" },
     { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
     { id: "boulder", behavior: "chaser", unlockGeneration: 2, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
-    { id: "lowCeiling", behavior: "overhead", unlockGeneration: 3, weight: 1, width: 44, height: 18, heightAboveGround: 14, color: "#6a4a2a" },
+    { id: "flyer", behavior: "overhead", unlockGeneration: 3, weight: 1.2, width: 20, height: 14, heightAboveGround: 18, color: "#4a4a6a" },
     { id: "pit", behavior: "pit", unlockGeneration: 3, weight: 0.8, width: 40, color: "#000000" },
-    { id: "flyer", behavior: "overhead", unlockGeneration: 4, weight: 1, width: 20, height: 14, heightAboveGround: 22, color: "#4a4a6a" },
-    { id: "sideEnemy", behavior: "wall", unlockGeneration: 4, weight: 0.7, width: 18, height: 220, color: "#6a2a2a" },
+    // segmentKind: 群れを構成する1羽あたりの見た目をどのkindから借りるか(flyerと共通にする)
+    { id: "flock", behavior: "flock", unlockGeneration: 4, weight: 0.7, segmentKind: "flyer", gapHeight: 52, topMargin: 30 },
   ],
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
