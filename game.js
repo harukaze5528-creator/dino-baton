@@ -123,6 +123,11 @@
       layStartSpeed: 0,
       layTargetSpeed: 0,
       layResult: null, // 停止中に画面中央へ表示する { generation, distance }
+      input: { up: false, down: false, left: false, right: false }, // キーボード/マウスの押しっぱなし状態
+      jumping: false,
+      jumpHoldFrames: 0,
+      crouching: false,
+      crouchPulseFrames: 0, // スマホの下スワイプ用の一時的なしゃがみ時間
     };
     obstacles = [];
     foods = [];
@@ -141,17 +146,62 @@
     return cfg.minInterval + Math.random() * (cfg.maxInterval - cfg.minInterval);
   }
 
-  function jump() {
-    if (gameOver) {
-      reset();
-      return;
-    }
-    if (currentStage().isEgg) return; // 卵は操作不能(孵化を待つだけ)
-    if (player.state === "laying") return; // 産卵演出中は操作不能
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  // ジャンプ開始(基本の高さ)。しゃがみ中や空中では発生しない
+  function startJump() {
+    if (!player.onGround || player.crouching) return;
+    player.vy = -currentStage().jumpPower * currentSpecies().jumpMultiplier;
+    player.onGround = false;
+    player.jumping = true;
+    player.jumpHoldFrames = 0;
+  }
+
+  // スマホの下スワイプ: 地上ならしゃがみを一定時間、空中なら一度だけ強く急降下させる
+  function triggerCrouchPulse() {
     if (player.onGround) {
-      player.vy = -currentStage().jumpPower * currentSpecies().jumpMultiplier;
-      player.onGround = false;
+      player.crouchPulseFrames = CONFIG.crouch.swipePulseFrames;
+    } else {
+      player.vy += CONFIG.crouch.fastFallBoost * 3;
     }
+  }
+
+  // 毎フレームの入力処理(ジャンプの高さ調整・しゃがみ/急降下・左右移動)
+  function handleInput() {
+    if (player.input.left) player.x -= CONFIG.player.moveSpeed;
+    if (player.input.right) player.x += CONFIG.player.moveSpeed;
+    player.x = clamp(player.x, CONFIG.player.minX, CONFIG.player.maxX);
+
+    if (player.crouchPulseFrames > 0) player.crouchPulseFrames--;
+
+    if (player.onGround) {
+      player.crouching = player.input.down || player.crouchPulseFrames > 0;
+    } else {
+      player.crouching = false; // 空中でのしゃがみ姿勢はなし。↓は急降下として扱う
+      if (player.input.down) {
+        player.vy += CONFIG.crouch.fastFallBoost;
+      }
+    }
+
+    if (player.input.up && player.onGround && !player.crouching) {
+      startJump();
+    }
+
+    // 押し続けている間はさらに高く跳べる(長押しでジャンプが伸びる)
+    if (player.jumping && player.input.up && player.vy < 0 && player.jumpHoldFrames < CONFIG.jump.holdMaxFrames) {
+      player.vy -= CONFIG.jump.holdBoostPerFrame;
+      player.jumpHoldFrames++;
+    }
+    if (player.vy >= 0) player.jumping = false;
+  }
+
+  // プレイヤーの当たり判定・描画用の矩形(しゃがみ中は足元基準で低くなる)
+  function playerHitbox() {
+    if (!player.crouching) return player;
+    const height = player.height * CONFIG.crouch.heightRatio;
+    return { x: player.x, y: player.y + (player.height - height), width: player.width, height };
   }
 
   function spawnObstacle() {
@@ -324,6 +374,8 @@
       if (currentStage().isEgg) {
         player.hatchTimer--;
         if (player.hatchTimer <= 0) hatch();
+      } else {
+        handleInput();
       }
 
       // プレイヤーの物理演算
@@ -378,7 +430,7 @@
       const obstacle = obstacles[i];
       obstacle.x -= currentSpeed;
 
-      if (player.state === "active" && isColliding(player, obstacle)) {
+      if (player.state === "active" && isColliding(playerHitbox(), obstacle)) {
         takeDamage();
         if (gameOver) break;
       }
@@ -393,7 +445,7 @@
       const food = foods[i];
       food.x -= currentSpeed;
 
-      if (player.state === "active" && isColliding(player, food)) {
+      if (player.state === "active" && isColliding(playerHitbox(), food)) {
         foods.splice(i, 1);
         eatFood();
         continue;
@@ -436,11 +488,12 @@
       ctx.fillRect(p.x, p.y, p.width, p.height);
     });
 
-    // プレイヤー(無敵中は点滅)
+    // プレイヤー(無敵中は点滅。しゃがみ中は低い矩形になる)
     const blinking = player.invulnFrames > 0 && Math.floor(player.invulnFrames / 5) % 2 === 0;
     if (!blinking) {
+      const box = playerHitbox();
       ctx.fillStyle = currentColor();
-      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.fillRect(box.x, box.y, box.width, box.height);
     }
 
     // 障害物
@@ -516,18 +569,87 @@
     requestAnimationFrame(loop);
   }
 
-  // 操作: PC(スペースキー / クリック)とスマホ(タップ)
+  // 操作: PC(↑/スペース=ジャンプ、↓=しゃがみ/急降下、←→=左右移動)とスマホ(タップ=ジャンプ、スワイプ=上下左右)
+  const KEY_DIRECTION = {
+    Space: "up",
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+  };
+
   window.addEventListener("keydown", (e) => {
-    if (e.code === "Space") {
-      e.preventDefault();
-      jump();
-    }
-  });
-  canvas.addEventListener("mousedown", jump);
-  canvas.addEventListener("touchstart", (e) => {
+    const direction = KEY_DIRECTION[e.code];
+    if (!direction) return;
     e.preventDefault();
-    jump();
+    if (gameOver) {
+      reset();
+      return;
+    }
+    player.input[direction] = true;
   });
+  window.addEventListener("keyup", (e) => {
+    const direction = KEY_DIRECTION[e.code];
+    if (!direction) return;
+    player.input[direction] = false;
+  });
+
+  canvas.addEventListener("mousedown", () => {
+    if (gameOver) {
+      reset();
+      return;
+    }
+    player.input.up = true;
+  });
+  window.addEventListener("mouseup", () => {
+    player.input.up = false;
+  });
+
+  // タップ=ジャンプ、スワイプ=上下左右(離した瞬間にジェスチャーを判定する)
+  let touchStart = null;
+  canvas.addEventListener(
+    "touchstart",
+    (e) => {
+      e.preventDefault();
+      if (gameOver) {
+        reset();
+        touchStart = null;
+        return;
+      }
+      const t = e.changedTouches[0];
+      touchStart = { x: t.clientX, y: t.clientY };
+    },
+    { passive: false }
+  );
+  canvas.addEventListener(
+    "touchend",
+    (e) => {
+      e.preventDefault();
+      if (!touchStart) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchStart.x;
+      const dy = t.clientY - touchStart.y;
+      touchStart = null;
+      handleSwipe(dx, dy);
+    },
+    { passive: false }
+  );
+
+  function handleSwipe(dx, dy) {
+    if (gameOver || currentStage().isEgg || player.state === "laying") return;
+    const threshold = CONFIG.touch.swipeThreshold;
+    if (Math.abs(dx) < threshold && Math.abs(dy) < threshold) {
+      startJump(); // タップ(スワイプと呼べるほど動いていない)
+      return;
+    }
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      if (dy < 0) startJump();
+      else triggerCrouchPulse();
+    } else {
+      const nudge = CONFIG.touch.moveNudge * (dx > 0 ? 1 : -1);
+      player.x = clamp(player.x + nudge, CONFIG.player.minX, CONFIG.player.maxX);
+    }
+  }
 
   reset();
   loop();
