@@ -37,23 +37,32 @@
     img.src = src;
   });
 
-  // 種専用のドット絵(CONFIG.species[].sprite。若い恐竜・大人の段階でだけ使う)。
-  // 指定がない種はnullのままになり、共通のjuvenile.png/adult.pngが使われる
-  const speciesSprites = {};
-  CONFIG.species.forEach((species) => {
-    if (!species.sprite) return;
-    speciesSprites[species.name] = null;
-    const img = new Image();
-    img.onload = () => { speciesSprites[species.name] = img; };
-    img.onerror = () => { speciesSprites[species.name] = null; };
-    img.src = species.sprite;
-  });
+  // 種専用のドット絵。sprite(CONFIG.species[].sprite)は若い恐竜・大人の段階で使い、
+  // chickSprite(CONFIG.species[].chickSprite)はヒナの段階で使う。指定がない種はnullの
+  // ままになり、共通のchick.png/juvenile.png/adult.pngが使われる
+  function loadSpeciesSpriteMap(fieldName) {
+    const map = {};
+    CONFIG.species.forEach((species) => {
+      if (!species[fieldName]) return;
+      map[species.name] = null;
+      const img = new Image();
+      img.onload = () => { map[species.name] = img; };
+      img.onerror = () => { map[species.name] = null; };
+      img.src = species[fieldName];
+    });
+    return map;
+  }
+  const speciesSprites = loadSpeciesSpriteMap("sprite");
+  const speciesChickSprites = loadSpeciesSpriteMap("chickSprite");
 
-  // 段階と種から描画に使うスプライトを決める。卵・ヒナは種によらず常に共通の絵。
+  // 段階と種から描画に使うスプライトを決める。卵は種によらず常に共通の絵。ヒナ・
   // 若い恐竜・大人は種専用の絵があればそれを使う(若い恐竜はCONFIG.stagesの小さい
   // width/heightでそのまま描画されるので、結果的に同じ絵の縮小表示になる)
   function spriteFor(stageIndex, species) {
-    if (stageIndex >= 2) {
+    if (stageIndex === 1) {
+      const chickSprite = speciesChickSprites[species.name];
+      if (chickSprite) return chickSprite;
+    } else if (stageIndex >= 2) {
       const speciesSprite = speciesSprites[species.name];
       if (speciesSprite) return speciesSprite;
     }

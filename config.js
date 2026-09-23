@@ -98,9 +98,10 @@ const CONFIG = {
   // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
   // obstacleVisuals は障害物の種類ごとの見た目の上書き(仕組みは共通、見た目だけ時代で変える)
   // sprite: 若い恐竜・大人の見た目に使う種専用のドット絵(assets/配下)。指定がない種は
-  // 汎用のjuvenile.png/adult.png(ティラノサウルスの絵)を使う。卵・ヒナは種によらず
-  // 常にegg.png/chick.pngを使う。若い恐竜の段階はこの同じ画像を小さいサイズで描画する
-  // (専用の縮小版画像は用意しない)
+  // 汎用のjuvenile.png/adult.png(ティラノサウルスの絵)を使う。若い恐竜の段階はこの
+  // 同じ画像を小さいサイズで描画する(専用の縮小版画像は用意しない)
+  // chickSprite: ヒナの見た目に使う種専用のドット絵。指定がない種は汎用のchick.pngを使う
+  // (卵は種によらず常にegg.pngを使う)
   species: [
     {
       name: "TYRANNOSAURUS",
@@ -161,6 +162,8 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 8000,
       yearsAgoEnd: 0,
+      sprite: "assets/chicken.png",
+      chickSprite: "assets/chicken-chick.png",
       obstacleVisuals: {
         spike: { color: "#4a8a4a", width: 20, height: 20 }, // サボテン
       },
