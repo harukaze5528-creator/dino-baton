@@ -4,10 +4,6 @@ const CONFIG = {
   canvasHeight: 300,
   groundHeight: 40,
 
-  // スクロール
-  scrollSpeed: 5, // 1フレームあたりの移動px
-  speedUpPerMeter: 0.0015, // 距離に応じて少しずつ速くなる
-
   // キャラクター(四角形)
   player: {
     x: 80,
@@ -16,16 +12,46 @@ const CONFIG = {
 
   // 成長段階: EGG → CHICK → JUVENILE → ADULT
   // jumpPower が大きいほど高く跳べる。foodToGrow は次の段階に育つ(ADULTは産卵する)までに必要なエサの数
+  // (世代1だけは difficulty.firstGeneration.foodToGrowMultiplier で全体的に少なくなる)
   // EGGだけは isEgg:true で、エサではなく hatchFrames 経過で自動的にCHICKへ孵化する
-  // foodToGrow の合計(6+9+12=27)とエサの出現間隔(平均90フレーム=1.5秒)から、
-  // うまく拾えた場合で1世代あたり約45秒、実際のプレイでは障害物を避けつつなので1分前後になる想定
-  // (テストプレイして体感が合わなければここを調整する)
+  // speedMultiplier はスクロール速度の段階別の倍率。ヒナが最も遅く、大人が最も速い
+  // (実際の速度 = difficulty.baseSpeed の世代ごとの値 × speedMultiplier。時間経過では加速しない)
   stages: [
-    { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90 },
-    { name: "CHICK", width: 20, height: 24, jumpPower: 14, color: "#333333", foodToGrow: 6 },
-    { name: "JUVENILE", width: 28, height: 34, jumpPower: 11, color: "#333333", foodToGrow: 9 },
-    { name: "ADULT", width: 38, height: 48, jumpPower: 8, color: "#333333", foodToGrow: 12 },
+    { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90, speedMultiplier: 0.5 },
+    { name: "CHICK", width: 20, height: 24, jumpPower: 14, color: "#333333", foodToGrow: 6, speedMultiplier: 0.7 },
+    { name: "JUVENILE", width: 28, height: 34, jumpPower: 11, color: "#333333", foodToGrow: 9, speedMultiplier: 1.0 },
+    { name: "ADULT", width: 38, height: 48, jumpPower: 8, color: "#333333", foodToGrow: 12, speedMultiplier: 1.3 },
   ],
+
+  // 世代ごとの難易度カーブ。世代1は特別に短く・簡単にし、以降は世代が進むごとに
+  // ベース速度と障害物密度を上げ、エサの出現頻度を下げる(必要エサ数は変えないことで、
+  // 1世代の長さ=ゴールまでのエサの量そのものは大きく変えない)
+  difficulty: {
+    // ベース速度(このあと段階ごとの speedMultiplier を掛けたものが実際のスクロール速度になる)
+    baseSpeed: {
+      start: 3.5, // 世代1のベース速度
+      perGeneration: 0.3, // 世代が1つ進むごとに増える量
+      max: 9, // 上限
+    },
+    // 障害物の出現間隔(フレーム数)。短いほど密度が高い
+    obstacleInterval: {
+      minStart: 90,
+      maxStart: 140,
+      decreasePerGeneration: 5,
+      floor: 40, // これより短くはしない
+    },
+    // エサの出現間隔(フレーム数)。長いほどエサが少ない
+    foodInterval: {
+      minStart: 60,
+      maxStart: 100,
+      increasePerGeneration: 4,
+      ceiling: 160, // これより長くはしない
+    },
+    // 世代1だけの特別調整(短く・簡単に)
+    firstGeneration: {
+      foodToGrowMultiplier: 0.45, // 成長に必要なエサ数を半分弱にして、すぐ一周できるようにする
+    },
+  },
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
   invulnFramesAfterHit: 90,
@@ -35,7 +61,7 @@ const CONFIG = {
   layAnimation: {
     decelFrames: 40, // スクロールが今の速度から0まで減速する時間
     holdFrames: 120, // 完全停止して世代の結果を表示している時間(この間に障害物・エサを消し、孵化する)
-    accelFrames: 50, // 0から通常速度まで加速する時間
+    accelFrames: 50, // 0から次の世代のヒナの速度まで加速する時間
   },
 
   // 障害物
@@ -43,8 +69,6 @@ const CONFIG = {
     width: 20,
     height: 30,
     color: "#555555",
-    minInterval: 60, // フレーム数(最短出現間隔)
-    maxInterval: 110, // フレーム数(最長出現間隔)
   },
 
   // エサ
@@ -52,11 +76,9 @@ const CONFIG = {
     width: 10,
     height: 10,
     color: "#999999",
-    minInterval: 70,
-    maxInterval: 110,
     heightAboveGround: [0, 70], // 地面すれすれ〜ジャンプで届く高さの範囲でランダム配置
   },
 
   // 距離表示
-  metersPerFrame: 0.1, // scrollSpeed に応じた見かけ上の距離換算
+  metersPerFrame: 0.1, // スクロール速度(px/フレーム)に応じた見かけ上の距離換算
 };

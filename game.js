@@ -22,6 +22,40 @@
     return CONFIG.stages[player.stageIndex];
   }
 
+  // 世代ごとのベース速度(これに成長段階の speedMultiplier を掛けたものが実際のスクロール速度)
+  function genBaseSpeed(generation) {
+    const d = CONFIG.difficulty.baseSpeed;
+    return Math.min(d.start + (generation - 1) * d.perGeneration, d.max);
+  }
+
+  // 世代が進むほど密になる障害物の出現間隔(フレーム数)
+  function obstacleIntervalRange(generation) {
+    const d = CONFIG.difficulty.obstacleInterval;
+    const dec = (generation - 1) * d.decreasePerGeneration;
+    return {
+      minInterval: Math.max(d.minStart - dec, d.floor),
+      maxInterval: Math.max(d.maxStart - dec, d.floor + 40),
+    };
+  }
+
+  // 世代が進むほど減っていくエサの出現間隔(フレーム数)
+  function foodIntervalRange(generation) {
+    const d = CONFIG.difficulty.foodInterval;
+    const inc = (generation - 1) * d.increasePerGeneration;
+    return {
+      minInterval: Math.min(d.minStart + inc, d.ceiling - 40),
+      maxInterval: Math.min(d.maxStart + inc, d.ceiling),
+    };
+  }
+
+  // 段階ごとに必要なエサの数(世代1だけ firstGeneration.foodToGrowMultiplier で短縮する)
+  function foodTarget(stage, generation) {
+    if (generation === 1) {
+      return Math.max(1, Math.round(stage.foodToGrow * CONFIG.difficulty.firstGeneration.foodToGrowMultiplier));
+    }
+    return stage.foodToGrow;
+  }
+
   function resizeToStage() {
     const stage = currentStage();
     const bottom = player.y + player.height;
@@ -56,9 +90,9 @@
     foods = [];
     parents = [];
     distanceMeters = 0;
-    currentSpeed = CONFIG.scrollSpeed;
-    obstacleTimer = randomInterval(CONFIG.obstacle);
-    foodTimer = randomInterval(CONFIG.food);
+    currentSpeed = genBaseSpeed(1) * stage.speedMultiplier;
+    obstacleTimer = randomInterval(obstacleIntervalRange(1));
+    foodTimer = randomInterval(foodIntervalRange(1));
     generationLog = [];
     gameOver = false;
   }
@@ -167,7 +201,8 @@
       currentSpeed = 0;
       if (player.layPhaseTimer <= 0) {
         hatch();
-        player.layTargetSpeed = CONFIG.scrollSpeed + distanceMeters * CONFIG.speedUpPerMeter;
+        // 産卵で次世代のヒナの速度に戻る
+        player.layTargetSpeed = genBaseSpeed(player.generation) * CONFIG.stages[1].speedMultiplier;
         player.layPhase = "accel";
         player.layPhaseTimer = anim.accelFrames;
       }
@@ -193,7 +228,7 @@
     const stage = currentStage();
     if (stage.isEgg) return;
     player.foodEaten++;
-    if (player.foodEaten < stage.foodToGrow) return;
+    if (player.foodEaten < foodTarget(stage, player.generation)) return;
 
     const isAdult = player.stageIndex === CONFIG.stages.length - 1;
     if (isAdult) {
@@ -229,8 +264,8 @@
     if (player.state === "laying") {
       updateLaying(); // このフレームの currentSpeed を決める(減速→停止→加速)
     } else {
-      // 距離が進むほど少しずつスクロールが速くなる
-      currentSpeed = CONFIG.scrollSpeed + distanceMeters * CONFIG.speedUpPerMeter;
+      // 時間経過では加速しない。速度は「世代のベース速度 × 成長段階の倍率」で決まる
+      currentSpeed = genBaseSpeed(player.generation) * currentStage().speedMultiplier;
     }
     distanceMeters += currentSpeed * CONFIG.metersPerFrame;
 
@@ -264,13 +299,13 @@
       obstacleTimer--;
       if (obstacleTimer <= 0) {
         spawnObstacle();
-        obstacleTimer = randomInterval(CONFIG.obstacle);
+        obstacleTimer = randomInterval(obstacleIntervalRange(player.generation));
       }
 
       foodTimer--;
       if (foodTimer <= 0) {
         spawnFood();
-        foodTimer = randomInterval(CONFIG.food);
+        foodTimer = randomInterval(foodIntervalRange(player.generation));
       }
     }
 
@@ -358,9 +393,9 @@
     } else if (stage.isEgg) {
       progress = `${stage.name} (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
     } else if (player.stageIndex === CONFIG.stages.length - 1) {
-      progress = `${stage.name} (lay egg: ${player.foodEaten}/${stage.foodToGrow})`;
+      progress = `${stage.name} (lay egg: ${player.foodEaten}/${foodTarget(stage, player.generation)})`;
     } else {
-      progress = `${stage.name} (${player.foodEaten}/${stage.foodToGrow})`;
+      progress = `${stage.name} (${player.foodEaten}/${foodTarget(stage, player.generation)})`;
     }
     ctx.fillText(progress, 10, 25);
 
