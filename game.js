@@ -37,6 +37,29 @@
     img.src = src;
   });
 
+  // 種専用のドット絵(CONFIG.species[].sprite。若い恐竜・大人の段階でだけ使う)。
+  // 指定がない種はnullのままになり、共通のjuvenile.png/adult.pngが使われる
+  const speciesSprites = {};
+  CONFIG.species.forEach((species) => {
+    if (!species.sprite) return;
+    speciesSprites[species.name] = null;
+    const img = new Image();
+    img.onload = () => { speciesSprites[species.name] = img; };
+    img.onerror = () => { speciesSprites[species.name] = null; };
+    img.src = species.sprite;
+  });
+
+  // 段階と種から描画に使うスプライトを決める。卵・ヒナは種によらず常に共通の絵。
+  // 若い恐竜・大人は種専用の絵があればそれを使う(若い恐竜はCONFIG.stagesの小さい
+  // width/heightでそのまま描画されるので、結果的に同じ絵の縮小表示になる)
+  function spriteFor(stageIndex, species) {
+    if (stageIndex >= 2) {
+      const speciesSprite = speciesSprites[species.name];
+      if (speciesSprite) return speciesSprite;
+    }
+    return playerSprites[stageIndex];
+  }
+
   // 孵化直前の点滅演出用: スプライトの絵をその場で白く染めるための使い回しキャンバス
   const flashScratchCanvas = document.createElement("canvas");
   const flashScratchCtx = flashScratchCanvas.getContext("2d");
@@ -44,8 +67,7 @@
   // スプライトがあればそのまま描画し(絵の陰影を活かすため普段は色付けしない)、
   // なければ今まで通り四角形を描画する。flashColorが指定された時だけ、絵の不透明部分を
   // その色で染めて孵化直前の点滅を表現する
-  function drawCharacter(stageIndex, x, y, width, height, color, flashColor) {
-    const sprite = playerSprites[stageIndex];
+  function drawCharacter(sprite, x, y, width, height, color, flashColor) {
     if (sprite) {
       if (flashColor) {
         flashScratchCanvas.width = sprite.naturalWidth;
@@ -418,6 +440,7 @@
       width: player.width,
       height: player.height,
       color: currentColor(),
+      sprite: spriteFor(CONFIG.stages.length - 1, currentSpecies()), // 産卵時点(旧世代)の種の見た目を固定で使う
       pulseFrames: CONFIG.layPulse.frames, // 産んだ直後、一瞬つぶれてから元に戻る演出用
     });
 
@@ -687,7 +710,7 @@
         h = p.height * squash;
         y = p.y + (p.height - h); // 足元の位置は揃えたまま高さだけつぶす
       }
-      drawCharacter(CONFIG.stages.length - 1, p.x, y, p.width, h, p.color);
+      drawCharacter(p.sprite, p.x, y, p.width, h, p.color);
     });
 
     // プレイヤー(無敵中は点滅。しゃがみ中は低い矩形になる。孵化直前は点滅する)
@@ -697,7 +720,7 @@
       const hatchTimer = hatchFlashFramesRemaining();
       const fx = CONFIG.hatchEffect;
       const isFlashing = hatchTimer !== null && Math.floor(hatchTimer / fx.flashIntervalFrames) % 2 === 0;
-      drawCharacter(player.stageIndex, box.x, box.y, box.width, box.height, currentColor(), isFlashing ? fx.flashColor : null);
+      drawCharacter(spriteFor(player.stageIndex, currentSpecies()), box.x, box.y, box.width, box.height, currentColor(), isFlashing ? fx.flashColor : null);
     }
 
     // 障害物

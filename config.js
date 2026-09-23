@@ -97,6 +97,10 @@ const CONFIG = {
   // 変わるのは見た目の色・障害物の意匠だけ(空の色は全種共通。CONFIG.skyColorを参照)
   // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
   // obstacleVisuals は障害物の種類ごとの見た目の上書き(仕組みは共通、見た目だけ時代で変える)
+  // sprite: 若い恐竜・大人の見た目に使う種専用のドット絵(assets/配下)。指定がない種は
+  // 汎用のjuvenile.png/adult.png(ティラノサウルスの絵)を使う。卵・ヒナは種によらず
+  // 常にegg.png/chick.pngを使う。若い恐竜の段階はこの同じ画像を小さいサイズで描画する
+  // (専用の縮小版画像は用意しない)
   species: [
     {
       name: "TYRANNOSAURUS",
@@ -118,6 +122,7 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 66000000,
       yearsAgoEnd: 60000000,
+      sprite: "assets/asteriornis.png",
       obstacleVisuals: {
         spike: { color: "#7a6a52", width: 16, height: 22 }, // 枯れた棘の茂み
       },
@@ -130,6 +135,7 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 56000000,
       yearsAgoEnd: 40000000,
+      sprite: "assets/gastornis.png",
       obstacleVisuals: {
         spike: { color: "#3a5a2a", width: 14, height: 28 }, // トゲの茂み
       },
@@ -142,6 +148,7 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 25000000,
       yearsAgoEnd: 2000000,
+      sprite: "assets/phorusrhacos.png",
       obstacleVisuals: {
         spike: { color: "#a68a4a", width: 16, height: 20 }, // 乾いた棘の茂み
       },
