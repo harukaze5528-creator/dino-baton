@@ -30,8 +30,13 @@ const CONFIG = {
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
   invulnFramesAfterHit: 90,
 
-  // 産卵演出: ADULTが立ち止まる時間(フレーム数)。この間は無敵・操作不能
-  layDurationFrames: 45,
+  // 産卵演出: 減速して完全停止 → 世代の結果を表示 → 孵化して加速再開、の3段階(単位はすべてフレーム数)
+  // 合計(decelFrames+holdFrames+accelFrames)が演出全体の長さ。60fpsなら210フレームで約3.5秒
+  layAnimation: {
+    decelFrames: 40, // スクロールが今の速度から0まで減速する時間
+    holdFrames: 120, // 完全停止して世代の結果を表示している時間(この間に障害物・エサを消し、孵化する)
+    accelFrames: 50, // 0から通常速度まで加速する時間
+  },
 
   // 障害物
   obstacle: {

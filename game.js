@@ -45,8 +45,12 @@
       invulnFrames: 0,
       generation: 1,
       generationStartDistance: 0,
-      state: "active", // "active" | "laying"(産卵演出中)
-      layTimer: 0,
+      state: "active", // "active" | "laying"(産卵演出中: 減速→停止→加速の3段階)
+      layPhase: null, // "decel" | "hold" | "accel"
+      layPhaseTimer: 0,
+      layStartSpeed: 0,
+      layTargetSpeed: 0,
+      layResult: null, // 停止中に画面中央へ表示する { generation, distance }
     };
     obstacles = [];
     foods = [];
@@ -106,10 +110,12 @@
   }
 
   function recordGeneration() {
-    generationLog.push({
+    const entry = {
       generation: player.generation,
       distance: distanceMeters - player.generationStartDistance,
-    });
+    };
+    generationLog.push(entry);
+    return entry;
   }
 
   function hatch() {
@@ -119,15 +125,7 @@
   }
 
   function startLaying() {
-    // 立ち止まって産卵の演出を開始。演出中は無敵・操作不能
-    player.state = "laying";
-    player.layTimer = CONFIG.layDurationFrames;
-    player.vy = 0;
-    player.onGround = true;
-  }
-
-  function finishLaying() {
-    // 親をその場に残す(以後は障害物と同じように左へ流れて画面外へ)
+    // 産卵演出を開始: 親をその場に残し、プレイヤーは卵に切り替わる(孵化はholdフェーズの終わりで起きる)
     const adultStage = currentStage();
     parents.push({
       x: player.x,
@@ -137,14 +135,52 @@
       color: adultStage.color,
     });
 
-    recordGeneration();
+    player.layResult = recordGeneration();
     player.generation++;
     player.generationStartDistance = distanceMeters;
     player.stageIndex = 0; // 卵
     player.foodEaten = 0;
-    player.hatchTimer = CONFIG.stages[0].hatchFrames;
     resizeToStage();
-    player.state = "active";
+    player.vy = 0;
+    player.onGround = true;
+
+    player.state = "laying";
+    player.layPhase = "decel";
+    player.layPhaseTimer = CONFIG.layAnimation.decelFrames;
+    player.layStartSpeed = currentSpeed;
+  }
+
+  function updateLaying() {
+    const anim = CONFIG.layAnimation;
+    player.layPhaseTimer--;
+
+    if (player.layPhase === "decel") {
+      currentSpeed = player.layStartSpeed * Math.max(player.layPhaseTimer, 0) / anim.decelFrames;
+      if (player.layPhaseTimer <= 0) {
+        currentSpeed = 0;
+        obstacles = [];
+        foods = [];
+        player.layPhase = "hold";
+        player.layPhaseTimer = anim.holdFrames;
+      }
+    } else if (player.layPhase === "hold") {
+      currentSpeed = 0;
+      if (player.layPhaseTimer <= 0) {
+        hatch();
+        player.layTargetSpeed = CONFIG.scrollSpeed + distanceMeters * CONFIG.speedUpPerMeter;
+        player.layPhase = "accel";
+        player.layPhaseTimer = anim.accelFrames;
+      }
+    } else if (player.layPhase === "accel") {
+      const progress = 1 - Math.max(player.layPhaseTimer, 0) / anim.accelFrames;
+      currentSpeed = player.layTargetSpeed * progress;
+      if (player.layPhaseTimer <= 0) {
+        currentSpeed = player.layTargetSpeed;
+        player.state = "active";
+        player.layPhase = null;
+        player.layResult = null;
+      }
+    }
   }
 
   function advanceStage() {
@@ -188,23 +224,23 @@
   function update() {
     if (gameOver) return;
 
-    // 距離が進むほど少しずつスクロールが速くなる
-    currentSpeed = CONFIG.scrollSpeed + distanceMeters * CONFIG.speedUpPerMeter;
-    distanceMeters += currentSpeed * CONFIG.metersPerFrame;
-
     if (player.invulnFrames > 0) player.invulnFrames--;
 
-    // 卵は孵化タイマーのみ進める
-    if (currentStage().isEgg) {
-      player.hatchTimer--;
-      if (player.hatchTimer <= 0) hatch();
-    }
-
     if (player.state === "laying") {
-      // 産卵演出中はその場に立ち止まる
-      player.layTimer--;
-      if (player.layTimer <= 0) finishLaying();
+      updateLaying(); // このフレームの currentSpeed を決める(減速→停止→加速)
     } else {
+      // 距離が進むほど少しずつスクロールが速くなる
+      currentSpeed = CONFIG.scrollSpeed + distanceMeters * CONFIG.speedUpPerMeter;
+    }
+    distanceMeters += currentSpeed * CONFIG.metersPerFrame;
+
+    if (player.state === "active") {
+      // 卵は孵化タイマーのみ進める(産卵演出中の卵は updateLaying が孵化を管理する)
+      if (currentStage().isEgg) {
+        player.hatchTimer--;
+        if (player.hatchTimer <= 0) hatch();
+      }
+
       // プレイヤーの物理演算
       player.vy += CONFIG.gravity;
       player.y += player.vy;
@@ -223,18 +259,19 @@
       }
     }
 
-    // 障害物の生成
-    obstacleTimer--;
-    if (obstacleTimer <= 0) {
-      spawnObstacle();
-      obstacleTimer = randomInterval(CONFIG.obstacle);
-    }
+    // 障害物・エサの生成は演出中(停止中)は止める
+    if (player.state === "active") {
+      obstacleTimer--;
+      if (obstacleTimer <= 0) {
+        spawnObstacle();
+        obstacleTimer = randomInterval(CONFIG.obstacle);
+      }
 
-    // エサの生成
-    foodTimer--;
-    if (foodTimer <= 0) {
-      spawnFood();
-      foodTimer = randomInterval(CONFIG.food);
+      foodTimer--;
+      if (foodTimer <= 0) {
+        spawnFood();
+        foodTimer = randomInterval(CONFIG.food);
+      }
     }
 
     // 障害物の移動と当たり判定
@@ -315,9 +352,9 @@
     ctx.textAlign = "left";
     ctx.font = "16px monospace";
     const stage = currentStage();
-    let progress;
+    let progress = "";
     if (player.state === "laying") {
-      progress = "Laying egg...";
+      if (player.layPhase !== "hold") progress = "Laying egg...";
     } else if (stage.isEgg) {
       progress = `${stage.name} (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
     } else if (player.stageIndex === CONFIG.stages.length - 1) {
@@ -326,6 +363,17 @@
       progress = `${stage.name} (${player.foodEaten}/${stage.foodToGrow})`;
     }
     ctx.fillText(progress, 10, 25);
+
+    // 産卵演出: 完全停止中は画面中央にその世代の結果を表示
+    if (player.state === "laying" && player.layPhase === "hold" && player.layResult) {
+      ctx.textAlign = "center";
+      ctx.font = "26px monospace";
+      ctx.fillText(
+        `GEN ${player.layResult.generation} ${Math.floor(player.layResult.distance)}m`,
+        CONFIG.canvasWidth / 2,
+        CONFIG.canvasHeight / 2
+      );
+    }
 
     if (gameOver) {
       ctx.textAlign = "center";
