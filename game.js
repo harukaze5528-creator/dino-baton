@@ -1,4 +1,4 @@
-// フェーズ1プロトタイプ: 自動スクロール・ジャンプ・障害物・当たり判定・距離表示
+// フェーズ2(一部): エサ・成長段階(ヒナ→若い恐竜→大人)・段階ごとのジャンプ力と当たり判定
 (function () {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -9,32 +9,40 @@
 
   let player;
   let obstacles;
-  let frameCount;
+  let foods;
   let distanceMeters;
   let currentSpeed;
-  let nextObstacleFrame;
+  let obstacleTimer;
+  let foodTimer;
   let gameOver;
 
+  function currentStage() {
+    return CONFIG.stages[player.stageIndex];
+  }
+
   function reset() {
+    const stage = CONFIG.stages[0];
     player = {
       x: CONFIG.player.x,
-      y: groundY - CONFIG.player.height,
-      width: CONFIG.player.width,
-      height: CONFIG.player.height,
+      y: groundY - stage.height,
+      width: stage.width,
+      height: stage.height,
       vy: 0,
       onGround: true,
+      stageIndex: 0,
+      foodEaten: 0,
     };
     obstacles = [];
-    frameCount = 0;
+    foods = [];
     distanceMeters = 0;
     currentSpeed = CONFIG.scrollSpeed;
-    nextObstacleFrame = randomInterval();
+    obstacleTimer = randomInterval(CONFIG.obstacle);
+    foodTimer = randomInterval(CONFIG.food);
     gameOver = false;
   }
 
-  function randomInterval() {
-    const { minInterval, maxInterval } = CONFIG.obstacle;
-    return minInterval + Math.random() * (maxInterval - minInterval);
+  function randomInterval(cfg) {
+    return cfg.minInterval + Math.random() * (cfg.maxInterval - cfg.minInterval);
   }
 
   function jump() {
@@ -43,7 +51,7 @@
       return;
     }
     if (player.onGround) {
-      player.vy = -CONFIG.jumpPower;
+      player.vy = -currentStage().jumpPower;
       player.onGround = false;
     }
   }
@@ -57,6 +65,17 @@
     });
   }
 
+  function spawnFood() {
+    const [minH, maxH] = CONFIG.food.heightAboveGround;
+    const heightAboveGround = minH + Math.random() * (maxH - minH);
+    foods.push({
+      x: CONFIG.canvasWidth,
+      y: groundY - CONFIG.food.height - heightAboveGround,
+      width: CONFIG.food.width,
+      height: CONFIG.food.height,
+    });
+  }
+
   function isColliding(a, b) {
     return (
       a.x < b.x + b.width &&
@@ -66,10 +85,22 @@
     );
   }
 
+  function growPlayer() {
+    if (player.stageIndex >= CONFIG.stages.length - 1) return;
+    player.foodEaten++;
+    if (player.foodEaten >= currentStage().foodToGrow) {
+      player.stageIndex++;
+      player.foodEaten = 0;
+      const bottom = player.y + player.height;
+      const newStage = currentStage();
+      player.width = newStage.width;
+      player.height = newStage.height;
+      player.y = bottom - newStage.height;
+    }
+  }
+
   function update() {
     if (gameOver) return;
-
-    frameCount++;
 
     // 距離が進むほど少しずつスクロールが速くなる
     currentSpeed = CONFIG.scrollSpeed + distanceMeters * CONFIG.speedUpPerMeter;
@@ -85,10 +116,17 @@
     }
 
     // 障害物の生成
-    if (frameCount >= nextObstacleFrame) {
+    obstacleTimer--;
+    if (obstacleTimer <= 0) {
       spawnObstacle();
-      frameCount = 0;
-      nextObstacleFrame = randomInterval();
+      obstacleTimer = randomInterval(CONFIG.obstacle);
+    }
+
+    // エサの生成
+    foodTimer--;
+    if (foodTimer <= 0) {
+      spawnFood();
+      foodTimer = randomInterval(CONFIG.food);
     }
 
     // 障害物の移動と当たり判定
@@ -102,6 +140,22 @@
 
       if (obstacle.x + obstacle.width < 0) {
         obstacles.splice(i, 1);
+      }
+    }
+
+    // エサの移動と当たり判定
+    for (let i = foods.length - 1; i >= 0; i--) {
+      const food = foods[i];
+      food.x -= currentSpeed;
+
+      if (isColliding(player, food)) {
+        foods.splice(i, 1);
+        growPlayer();
+        continue;
+      }
+
+      if (food.x + food.width < 0) {
+        foods.splice(i, 1);
       }
     }
   }
@@ -118,18 +172,32 @@
     ctx.fillRect(0, groundY, CONFIG.canvasWidth, CONFIG.groundHeight);
 
     // プレイヤー
-    ctx.fillStyle = CONFIG.player.color;
+    ctx.fillStyle = currentStage().color;
     ctx.fillRect(player.x, player.y, player.width, player.height);
 
     // 障害物
     ctx.fillStyle = CONFIG.obstacle.color;
     obstacles.forEach((o) => ctx.fillRect(o.x, o.y, o.width, o.height));
 
+    // エサ
+    ctx.fillStyle = CONFIG.food.color;
+    foods.forEach((f) => ctx.fillRect(f.x, f.y, f.width, f.height));
+
     // 距離表示
     ctx.fillStyle = "#000000";
     ctx.font = "20px monospace";
     ctx.textAlign = "right";
     ctx.fillText(formatDistance(distanceMeters), CONFIG.canvasWidth - 10, 30);
+
+    // 成長段階表示(動作確認用)
+    ctx.textAlign = "left";
+    ctx.font = "16px monospace";
+    const stage = currentStage();
+    const progress =
+      player.stageIndex >= CONFIG.stages.length - 1
+        ? stage.name
+        : `${stage.name} (${player.foodEaten}/${stage.foodToGrow})`;
+    ctx.fillText(progress, 10, 25);
 
     if (gameOver) {
       ctx.textAlign = "center";

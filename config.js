@@ -11,14 +11,16 @@ const CONFIG = {
   // キャラクター(四角形)
   player: {
     x: 80,
-    width: 30,
-    height: 40,
-    color: "#333333",
   },
-
-  // ジャンプ
-  jumpPower: 12,
   gravity: 0.6,
+
+  // 成長段階: ヒナ → 若い恐竜 → 大人
+  // jumpPower が大きいほど高く跳べる。foodToGrow は次の段階に育つまでに必要なエサの数
+  stages: [
+    { name: "ヒナ", width: 20, height: 24, jumpPower: 14, color: "#333333", foodToGrow: 3 },
+    { name: "若い恐竜", width: 28, height: 34, jumpPower: 11, color: "#333333", foodToGrow: 5 },
+    { name: "大人", width: 38, height: 48, jumpPower: 8, color: "#333333", foodToGrow: Infinity },
+  ],
 
   // 障害物
   obstacle: {
@@ -27,6 +29,16 @@ const CONFIG = {
     color: "#555555",
     minInterval: 60, // フレーム数(最短出現間隔)
     maxInterval: 110, // フレーム数(最長出現間隔)
+  },
+
+  // エサ
+  food: {
+    width: 10,
+    height: 10,
+    color: "#999999",
+    minInterval: 50,
+    maxInterval: 90,
+    heightAboveGround: [0, 70], // 地面すれすれ〜ジャンプで届く高さの範囲でランダム配置
   },
 
   // 距離表示
