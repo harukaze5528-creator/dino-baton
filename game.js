@@ -204,12 +204,55 @@
     return { x: player.x, y: player.y + (player.height - height), width: player.width, height };
   }
 
+  // 世代でまだ解禁されていない種類を除いた中から、重み(weight)に応じてランダムに選ぶ
+  function pickObstacleKind() {
+    const unlocked = CONFIG.obstacleKinds.filter((k) => k.unlockGeneration <= player.generation);
+    const totalWeight = unlocked.reduce((sum, k) => sum + (k.weight || 1), 0);
+    let r = Math.random() * totalWeight;
+    for (const k of unlocked) {
+      r -= k.weight || 1;
+      if (r <= 0) return k;
+    }
+    return unlocked[unlocked.length - 1];
+  }
+
+  // 種ごとの見た目の上書き(仕組みはkind共通、見た目だけ時代で変える)
+  function obstacleVisual(kind) {
+    const overrides = currentSpecies().obstacleVisuals && currentSpecies().obstacleVisuals[kind.id];
+    return overrides ? { ...kind, ...overrides } : kind;
+  }
+
   function spawnObstacle() {
+    const kind = pickObstacleKind();
+    const visual = obstacleVisual(kind);
+    const width = visual.width;
+    const height = visual.height || CONFIG.groundHeight; // pitは高さ未指定なので地面の厚み分にする
+    let x;
+    let y;
+
+    if (kind.behavior === "chaser") {
+      x = -width; // 画面左の外側から後ろを追ってくる
+      y = groundY - height;
+    } else if (kind.behavior === "overhead") {
+      x = CONFIG.canvasWidth;
+      y = groundY - kind.heightAboveGround - height; // 地面から少し浮いた高さ
+    } else if (kind.behavior === "pit") {
+      x = CONFIG.canvasWidth;
+      y = groundY; // 地面の帯を上から背景色で塗って穴に見せる
+    } else {
+      x = CONFIG.canvasWidth;
+      y = groundY - height;
+    }
+
     obstacles.push({
-      x: CONFIG.canvasWidth,
-      y: groundY - CONFIG.obstacle.height,
-      width: CONFIG.obstacle.width,
-      height: CONFIG.obstacle.height,
+      kind: kind.id,
+      behavior: kind.behavior,
+      x,
+      y,
+      width,
+      height,
+      color: visual.color,
+      approachSpeedMultiplier: kind.approachSpeedMultiplier || 1,
     });
   }
 
@@ -242,6 +285,21 @@
       a.y < b.y + b.height &&
       a.y + a.height > b.y
     );
+  }
+
+  function xOverlap(a, b) {
+    return a.x < b.x + b.width && a.x + a.width > b.x;
+  }
+
+  // 足場(platform)に重なっている間は、その上面をその場の「地面」として扱う
+  function playerGroundY() {
+    let ground = groundY;
+    for (const o of obstacles) {
+      if (o.behavior === "platform" && xOverlap(player, o) && o.y < ground) {
+        ground = o.y;
+      }
+    }
+    return ground;
   }
 
   function recordGeneration() {
@@ -378,11 +436,13 @@
         handleInput();
       }
 
-      // プレイヤーの物理演算
+      // プレイヤーの物理演算(足場に乗っている間はそこが地面になる)
       player.vy += CONFIG.gravity;
       player.y += player.vy;
-      if (player.y + player.height >= groundY) {
-        player.y = groundY - player.height;
+      player.onGround = false;
+      const landingY = playerGroundY();
+      if (player.y + player.height >= landingY) {
+        player.y = landingY - player.height;
         player.vy = 0;
         player.onGround = true;
       }
@@ -425,17 +485,28 @@
       }
     }
 
-    // 障害物の移動と当たり判定
+    // 障害物の移動と当たり判定(種類ごとに仕組みが異なる)
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obstacle = obstacles[i];
-      obstacle.x -= currentSpeed;
-
-      if (player.state === "active" && isColliding(playerHitbox(), obstacle)) {
-        takeDamage();
-        if (gameOver) break;
+      if (obstacle.behavior === "chaser") {
+        obstacle.x += currentSpeed * obstacle.approachSpeedMultiplier; // 後ろから追いついてくる
+      } else {
+        obstacle.x -= currentSpeed;
       }
 
-      if (obstacle.x + obstacle.width < 0) {
+      if (player.state === "active" && obstacle.behavior !== "platform") {
+        const hit =
+          obstacle.behavior === "pit"
+            ? player.onGround && xOverlap(player, obstacle) // 穴はジャンプで飛び越えれば当たらない
+            : isColliding(playerHitbox(), obstacle);
+        if (hit) {
+          takeDamage();
+          if (gameOver) break;
+        }
+      }
+
+      const offscreen = obstacle.behavior === "chaser" ? obstacle.x > CONFIG.canvasWidth : obstacle.x + obstacle.width < 0;
+      if (offscreen) {
         obstacles.splice(i, 1);
       }
     }
@@ -496,9 +567,11 @@
       ctx.fillRect(box.x, box.y, box.width, box.height);
     }
 
-    // 障害物
-    ctx.fillStyle = CONFIG.obstacle.color;
-    obstacles.forEach((o) => ctx.fillRect(o.x, o.y, o.width, o.height));
+    // 障害物(pitは背景色で塗って地面に穴が空いているように見せる)
+    obstacles.forEach((o) => {
+      ctx.fillStyle = o.kind === "pit" ? currentSpecies().bgColor : o.color;
+      ctx.fillRect(o.x, o.y, o.width, o.height);
+    });
 
     // エサ
     ctx.fillStyle = CONFIG.food.color;

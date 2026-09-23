@@ -83,6 +83,7 @@ const CONFIG = {
   // jumpMultiplier/sizeMultiplier/speedMultiplier は成長段階側の値にさらに掛けて種ごとの個性を出す
   // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
   // decor は背景に流れる簡単な図形(木・岩・草・ビルなど)のサイズと出現間隔
+  // obstacleVisuals は障害物の種類ごとの見た目の上書き(仕組みは共通、見た目だけ時代で変える)
   species: [
     {
       name: "TYRANNOSAURUS",
@@ -94,6 +95,9 @@ const CONFIG = {
       yearsAgoEnd: 66000000,
       bgColor: "#dfe8d0",
       decor: { color: "#7a9c6a", width: 12, height: 50, minInterval: 100, maxInterval: 160 },
+      obstacleVisuals: {
+        spike: { color: "#4a6a2a", width: 14, height: 28 }, // トゲのある植物
+      },
     },
     {
       name: "ASTERIORNIS",
@@ -105,6 +109,9 @@ const CONFIG = {
       yearsAgoEnd: 60000000,
       bgColor: "#e8dcc8",
       decor: { color: "#a68a6a", width: 24, height: 18, minInterval: 130, maxInterval: 200 },
+      obstacleVisuals: {
+        spike: { color: "#7a6a52", width: 16, height: 22 }, // 枯れた棘の茂み
+      },
     },
     {
       name: "GASTORNIS",
@@ -116,6 +123,9 @@ const CONFIG = {
       yearsAgoEnd: 40000000,
       bgColor: "#dbe8d5",
       decor: { color: "#6a8c5a", width: 14, height: 45, minInterval: 100, maxInterval: 160 },
+      obstacleVisuals: {
+        spike: { color: "#3a5a2a", width: 14, height: 28 }, // トゲの茂み
+      },
     },
     {
       name: "PHORUSRHACOS",
@@ -127,6 +137,9 @@ const CONFIG = {
       yearsAgoEnd: 2000000,
       bgColor: "#eef0c8",
       decor: { color: "#b8c46a", width: 8, height: 14, minInterval: 60, maxInterval: 110 },
+      obstacleVisuals: {
+        spike: { color: "#a68a4a", width: 16, height: 20 }, // 乾いた棘の茂み
+      },
     },
     {
       name: "CHICKEN",
@@ -138,7 +151,31 @@ const CONFIG = {
       yearsAgoEnd: 0,
       bgColor: "#dfe3e8",
       decor: { color: "#8a94a0", width: 30, height: 70, minInterval: 140, maxInterval: 220 },
+      obstacleVisuals: {
+        spike: { color: "#4a8a4a", width: 20, height: 20 }, // サボテン
+      },
     },
+  ],
+
+  // 障害物の種類。世代が進むごとに新しい種類が1つずつ解禁され(unlockGeneration)、
+  // それ以降は解禁済みの種類の中から weight(重み)に応じてランダムに選ばれて出現する
+  // behavior:
+  //   "platform" 上に乗れる。ダメージなし(足場としてground面を一時的に持ち上げる)
+  //   "jumpable" 通常の障害物。ジャンプで避ける
+  //   "overhead" 頭上の障害物。しゃがんで避ける(low ceiling / 飛ぶ敵)
+  //   "pit"      地上にいる時だけダメージ。ジャンプで飛び越える
+  //   "chaser"   後ろ(画面左)から追いついてくる。追いつかれるとダメージ
+  //   "wall"     高くて跳べない。左右移動で避けるしかない
+  // 見た目(width/height/color)は種ごとの obstacleVisuals で上書きできる。追加の順番・出現頻度・
+  // 組み合わせ方はこの配列とdifficulty.obstacleIntervalで調整する
+  obstacleKinds: [
+    { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a" },
+    { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
+    { id: "boulder", behavior: "chaser", unlockGeneration: 3, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
+    { id: "lowCeiling", behavior: "overhead", unlockGeneration: 4, weight: 1, width: 44, height: 18, heightAboveGround: 14, color: "#6a4a2a" },
+    { id: "pit", behavior: "pit", unlockGeneration: 5, weight: 0.8, width: 40, color: "#000000" },
+    { id: "flyer", behavior: "overhead", unlockGeneration: 6, weight: 1, width: 20, height: 14, heightAboveGround: 22, color: "#4a4a6a" },
+    { id: "sideEnemy", behavior: "wall", unlockGeneration: 7, weight: 0.7, width: 18, height: 220, color: "#6a2a2a" },
   ],
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
@@ -150,13 +187,6 @@ const CONFIG = {
     decelFrames: 40, // スクロールが今の速度から0まで減速する時間
     holdFrames: 120, // 完全停止して世代の結果を表示している時間(この間に障害物・エサを消し、孵化する)
     accelFrames: 50, // 0から次の世代のヒナの速度まで加速する時間
-  },
-
-  // 障害物
-  obstacle: {
-    width: 16,
-    height: 24,
-    color: "#555555",
   },
 
   // エサ
