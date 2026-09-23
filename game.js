@@ -33,32 +33,31 @@
     img.src = src;
   });
 
-  // 色付け済みスプライトのキャッシュ(スプライト×色の組み合わせごとに1回だけ生成する)
-  const tintedSpriteCache = {};
-  function tintedSprite(img, color) {
-    const key = img.src + "|" + color;
-    let tinted = tintedSpriteCache[key];
-    if (!tinted) {
-      tinted = document.createElement("canvas");
-      tinted.width = img.naturalWidth;
-      tinted.height = img.naturalHeight;
-      const tctx = tinted.getContext("2d");
-      tctx.drawImage(img, 0, 0);
-      tctx.globalCompositeOperation = "source-in";
-      tctx.fillStyle = color;
-      tctx.fillRect(0, 0, tinted.width, tinted.height);
-      tintedSpriteCache[key] = tinted;
-    }
-    return tinted;
-  }
+  // 孵化直前の点滅演出用: スプライトの絵をその場で白く染めるための使い回しキャンバス
+  const flashScratchCanvas = document.createElement("canvas");
+  const flashScratchCtx = flashScratchCanvas.getContext("2d");
 
-  // スプライトがあればそれを色付けして描画し、なければ今まで通り四角形を描画する
-  function drawCharacter(stageIndex, x, y, width, height, color) {
+  // スプライトがあればそのまま描画し(絵の陰影を活かすため普段は色付けしない)、
+  // なければ今まで通り四角形を描画する。flashColorが指定された時だけ、絵の不透明部分を
+  // その色で染めて孵化直前の点滅を表現する
+  function drawCharacter(stageIndex, x, y, width, height, color, flashColor) {
     const sprite = playerSprites[stageIndex];
     if (sprite) {
-      ctx.drawImage(tintedSprite(sprite, color), x, y, width, height);
+      if (flashColor) {
+        flashScratchCanvas.width = sprite.naturalWidth;
+        flashScratchCanvas.height = sprite.naturalHeight;
+        flashScratchCtx.clearRect(0, 0, flashScratchCanvas.width, flashScratchCanvas.height);
+        flashScratchCtx.drawImage(sprite, 0, 0);
+        flashScratchCtx.globalCompositeOperation = "source-atop";
+        flashScratchCtx.fillStyle = flashColor;
+        flashScratchCtx.fillRect(0, 0, flashScratchCanvas.width, flashScratchCanvas.height);
+        flashScratchCtx.globalCompositeOperation = "source-over";
+        ctx.drawImage(flashScratchCanvas, x, y, width, height);
+      } else {
+        ctx.drawImage(sprite, x, y, width, height);
+      }
     } else {
-      ctx.fillStyle = color;
+      ctx.fillStyle = flashColor || color;
       ctx.fillRect(x, y, width, height);
     }
   }
@@ -692,8 +691,7 @@
       const hatchTimer = hatchFlashFramesRemaining();
       const fx = CONFIG.hatchEffect;
       const isFlashing = hatchTimer !== null && Math.floor(hatchTimer / fx.flashIntervalFrames) % 2 === 0;
-      const color = isFlashing ? fx.flashColor : currentColor();
-      drawCharacter(player.stageIndex, box.x, box.y, box.width, box.height, color);
+      drawCharacter(player.stageIndex, box.x, box.y, box.width, box.height, currentColor(), isFlashing ? fx.flashColor : null);
     }
 
     // 障害物
