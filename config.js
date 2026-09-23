@@ -141,7 +141,7 @@ const CONFIG = {
     {
       name: "CHICKEN",
       color: "#4a4a4a",
-      jumpMultiplier: 1.0,
+      jumpMultiplier: 0.5, // ニワトリはほとんど飛べないので、通常世代のジャンプ力は全種の中で一番低くする
       sizeMultiplier: 0.5,
       speedMultiplier: 1.0,
       yearsAgoStart: 8000,
