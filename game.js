@@ -109,12 +109,13 @@
       invulnFrames: 0,
       generation: 1,
       generationStartDistance: 0,
-      state: "active", // "active" | "laying"(産卵演出中: 減速→停止→加速の3段階)
-      layPhase: null, // "decel" | "hold" | "accel"
+      state: "active", // "active" | "laying"(産卵演出中: 減速→停止→[隕石]→加速の段階)
+      layPhase: null, // "decel" | "hold" | "meteor" | "accel"
       layPhaseTimer: 0,
       layStartSpeed: 0,
       layTargetSpeed: 0,
       layResult: null, // 停止中に画面中央へ表示する { generation, distance }
+      isMeteor: false, // このholdの後に隕石イベントを挟むか
       input: { up: false, down: false, left: false, right: false }, // キーボード/マウスの押しっぱなし状態
       jumping: false,
       jumpHoldFrames: 0,
@@ -330,6 +331,8 @@
 
   function startLaying() {
     // 産卵演出を開始: 親をその場に残し、プレイヤーは卵に切り替わる(孵化はholdフェーズの終わりで起きる)
+    const oldSpeciesIndex = speciesIndexForGeneration(player.generation);
+
     parents.push({
       x: player.x,
       y: player.y,
@@ -347,10 +350,22 @@
     player.vy = 0;
     player.onGround = true;
 
+    // ティラノサウルス(種0)の最後の世代が終わるタイミングだけ、隕石イベントを挟む
+    const newSpeciesIndex = speciesIndexForGeneration(player.generation);
+    player.isMeteor = oldSpeciesIndex === 0 && newSpeciesIndex === 1;
+
     player.state = "laying";
     player.layPhase = "decel";
     player.layPhaseTimer = CONFIG.layAnimation.decelFrames;
     player.layStartSpeed = currentSpeed;
+  }
+
+  // hold(世代結果の表示)が終わったときの共通処理: 孵化して次の速度まで加速再開する
+  function finishHold() {
+    hatch();
+    player.layTargetSpeed = genBaseSpeed(player.generation) * CONFIG.stages[1].speedMultiplier * currentSpecies().speedMultiplier;
+    player.layPhase = "accel";
+    player.layPhaseTimer = CONFIG.layAnimation.accelFrames;
   }
 
   function updateLaying() {
@@ -369,11 +384,18 @@
     } else if (player.layPhase === "hold") {
       currentSpeed = 0;
       if (player.layPhaseTimer <= 0) {
-        hatch();
-        // 産卵で次世代のヒナの速度に戻る
-        player.layTargetSpeed = genBaseSpeed(player.generation) * CONFIG.stages[1].speedMultiplier * currentSpecies().speedMultiplier;
-        player.layPhase = "accel";
-        player.layPhaseTimer = anim.accelFrames;
+        if (player.isMeteor) {
+          const m = CONFIG.meteorEvent;
+          player.layPhase = "meteor";
+          player.layPhaseTimer = m.fallFrames + m.flashFrames;
+        } else {
+          finishHold();
+        }
+      }
+    } else if (player.layPhase === "meteor") {
+      currentSpeed = 0;
+      if (player.layPhaseTimer <= 0) {
+        finishHold();
       }
     } else if (player.layPhase === "accel") {
       const progress = 1 - Math.max(player.layPhaseTimer, 0) / anim.accelFrames;
@@ -601,7 +623,8 @@
     const speciesName = currentSpecies().name;
     let progress = "";
     if (player.state === "laying") {
-      if (player.layPhase !== "hold") progress = "Laying egg...";
+      if (player.layPhase === "meteor") progress = "METEOR IMPACT...";
+      else if (player.layPhase !== "hold") progress = "Laying egg...";
     } else if (stage.isEgg) {
       progress = `${speciesName} EGG (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
     } else if (player.stageIndex === CONFIG.stages.length - 1) {
@@ -625,6 +648,24 @@
         CONFIG.canvasWidth / 2,
         CONFIG.canvasHeight / 2
       );
+    }
+
+    // 隕石イベント: 右上から隕石が落ちてきて、着弾すると画面が閃光に包まれる
+    if (player.state === "laying" && player.layPhase === "meteor") {
+      const m = CONFIG.meteorEvent;
+      const elapsed = m.fallFrames + m.flashFrames - player.layPhaseTimer;
+      if (elapsed < m.fallFrames) {
+        const t = elapsed / m.fallFrames;
+        const startX = CONFIG.canvasWidth - 40;
+        const startY = 0;
+        const endX = CONFIG.canvasWidth / 2;
+        const endY = groundY;
+        ctx.fillStyle = m.color;
+        ctx.fillRect(startX + (endX - startX) * t, startY + (endY - startY) * t, 20, 20);
+      } else {
+        ctx.fillStyle = m.flashColor;
+        ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+      }
     }
 
     if (gameOver) {
