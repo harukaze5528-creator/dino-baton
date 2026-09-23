@@ -72,7 +72,7 @@ const CONFIG = {
       increasePerGeneration: 4,
       ceiling: 160, // これより長くはしない
     },
-    generationsPerSpecies: 4, // 何世代ごとに次の種へ移るか
+    generationsPerSpecies: 1, // 何世代ごとに次の種へ移るか
   },
 
   // 1周目が「NOW」に達したあと(=先祖返り後)は年代表示が「n YEARS LATER」形式に切り替わり、
@@ -80,8 +80,8 @@ const CONFIG = {
   yearsLaterPerGeneration: 1000,
 
   // 種の移り変わり(年代順)。ティラノサウルス→…→ニワトリで一周し、以降はまた最初から
-  // (先祖返りのループそのものはステップ4で実装。ここでは種ごとのパラメータのみ定義する)
-  // jumpMultiplier/sizeMultiplier/speedMultiplier は成長段階側の値にさらに掛けて種ごとの個性を出す
+  // jumpMultiplier/sizeMultiplier/speedMultiplier は全種共通(ティラノサウルスの数値に統一)。
+  // 種ごとに変わるのは見た目の色・背景・障害物の意匠だけ
   // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
   // decor は背景に流れる簡単な図形(木・岩・草・ビルなど)のサイズと出現間隔
   // obstacleVisuals は障害物の種類ごとの見た目の上書き(仕組みは共通、見た目だけ時代で変える)
@@ -103,9 +103,9 @@ const CONFIG = {
     {
       name: "ASTERIORNIS",
       color: "#4a3f2a",
-      jumpMultiplier: 1.3,
-      sizeMultiplier: 0.6,
-      speedMultiplier: 1.0,
+      jumpMultiplier: 0.9,
+      sizeMultiplier: 1.05,
+      speedMultiplier: 0.95,
       yearsAgoStart: 66000000,
       yearsAgoEnd: 60000000,
       bgColor: "#e8dcc8",
@@ -117,9 +117,9 @@ const CONFIG = {
     {
       name: "GASTORNIS",
       color: "#2f3a2f",
-      jumpMultiplier: 0.85,
+      jumpMultiplier: 0.9,
       sizeMultiplier: 1.05,
-      speedMultiplier: 0.9,
+      speedMultiplier: 0.95,
       yearsAgoStart: 56000000,
       yearsAgoEnd: 40000000,
       bgColor: "#dbe8d5",
@@ -131,9 +131,9 @@ const CONFIG = {
     {
       name: "PHORUSRHACOS",
       color: "#3a3a2a",
-      jumpMultiplier: 1.0,
-      sizeMultiplier: 1.0,
-      speedMultiplier: 1.25,
+      jumpMultiplier: 0.9,
+      sizeMultiplier: 1.05,
+      speedMultiplier: 0.95,
       yearsAgoStart: 25000000,
       yearsAgoEnd: 2000000,
       bgColor: "#eef0c8",
@@ -145,9 +145,9 @@ const CONFIG = {
     {
       name: "CHICKEN",
       color: "#4a4a4a",
-      jumpMultiplier: 0.5, // ニワトリはほとんど飛べないので、通常世代のジャンプ力は全種の中で一番低くする
-      sizeMultiplier: 0.5,
-      speedMultiplier: 1.0,
+      jumpMultiplier: 0.9,
+      sizeMultiplier: 1.05,
+      speedMultiplier: 0.95,
       yearsAgoStart: 8000,
       yearsAgoEnd: 0,
       bgColor: "#dfe3e8",
@@ -158,9 +158,9 @@ const CONFIG = {
     },
   ],
 
-  // 障害物の種類。generationsPerSpecies(=4世代で次の種へ)に合わせて、最初の種の中で
-  // 全種類が出そろうよう世代1→4で解禁する(unlockGeneration)。世代1:木の台のみ、
-  // 世代2:+トゲ・転がる岩、世代3:+飛ぶ敵・穴、世代4:+群れ。
+  // 障害物の種類。種が変わるごと(世代1〜5、generationsPerSpecies=1なのでそのまま種の順番と一致)に
+  // 1〜2種類ずつ解禁する(unlockGeneration)。世代1:木の台、世代2:+トゲ、世代3:+転がる岩、
+  // 世代4:+飛ぶ敵・穴、世代5:+群れ、で全種類が出そろう。
   // 解禁後は、解禁済みの種類の中から weight(重み)に応じてランダムに選ばれて出現する
   // behavior:
   //   "platform" 上に乗れる。ダメージなし(足場としてground面を一時的に持ち上げる)
@@ -175,11 +175,11 @@ const CONFIG = {
   obstacleKinds: [
     { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a" },
     { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
-    { id: "boulder", behavior: "chaser", unlockGeneration: 2, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
-    { id: "flyer", behavior: "overhead", unlockGeneration: 3, weight: 1.2, width: 20, height: 14, heightAboveGround: 18, color: "#4a4a6a" },
-    { id: "pit", behavior: "pit", unlockGeneration: 3, weight: 0.8, width: 40, height: 12, color: "#6a1a1a" },
+    { id: "boulder", behavior: "chaser", unlockGeneration: 3, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
+    { id: "flyer", behavior: "overhead", unlockGeneration: 4, weight: 1.2, width: 20, height: 14, heightAboveGround: 18, color: "#4a4a6a" },
+    { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 40, height: 12, color: "#6a1a1a" },
     // segmentKind: 群れを構成する1羽あたりの見た目をどのkindから借りるか(flyerと共通にする)
-    { id: "flock", behavior: "flock", unlockGeneration: 4, weight: 0.7, segmentKind: "flyer", gapHeight: 28, topMargin: 30 },
+    { id: "flock", behavior: "flock", unlockGeneration: 5, weight: 0.7, segmentKind: "flyer", gapHeight: 28, topMargin: 30 },
   ],
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
