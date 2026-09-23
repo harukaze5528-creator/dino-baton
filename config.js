@@ -50,10 +50,13 @@ const CONFIG = {
   // その代わりに世代が進むごとにベース速度と障害物密度を上げ、エサの出現頻度を下げていく
   difficulty: {
     // ベース速度(このあと段階ごとの speedMultiplier を掛けたものが実際のスクロール速度になる)
+    // 1周(全種×generationsPerSpecies世代)の中ではstart→maxのカーブを繰り返し、
+    // 周回(LOOP)するたびにperLoopBonusぶん底上げされ、次の周回はより速い状態から始まる
     baseSpeed: {
-      start: 5, // 世代1のベース速度(遅すぎるとジャンプの滞空時間に対して障害物が不自然に遅く見え、逆にタイミングが取りづらくなるため、ある程度の速さを確保する)
+      start: 5, // 1周の中の世代1のベース速度(遅すぎるとジャンプの滞空時間に対して障害物が不自然に遅く見え、逆にタイミングが取りづらくなるため、ある程度の速さを確保する)
       perGeneration: 0.3, // 世代が1つ進むごとに増える量
-      max: 9, // 上限
+      max: 9, // 1周の中での上限(このあとperLoopBonusが加算される)
+      perLoopBonus: 1, // 周回(LOOP)するたびに底上げされる量
     },
     // 障害物の出現間隔(フレーム数)。短いほど密度が高い
     obstacleInterval: {
@@ -193,6 +196,32 @@ const CONFIG = {
     flashFrames: 20, // 着弾の閃光
     color: "#3a1a0a", // 隕石本体の色
     flashColor: "#fff3d0", // 着弾時に画面全体を覆う閃光の色
+  },
+
+  // エンディング: ニワトリ(最後の種)の最後の世代になると、通常の成長段階(卵→ヒナ→…)の代わりに
+  // このflightシーケンスに入る。ジャンプは羽ばたき(flap)になり、エサの代わりに流れてくる
+  // エンドロールの文字を避けながら進む。当たってもダメージはなく、点滅して知らせるだけ。
+  // flightDurationFrames が経過すると自動的に産卵演出(先祖返り)に入り、次のLOOPのティラノサウルスへ戻る
+  ending: {
+    flapPower: 9, // 羽ばたき1回で得られる上向きの力
+    gravity: 0.35, // 飛行中の重力(通常より弱め。羽ばたきで浮遊しやすくする)
+    flightSpeed: 6, // 飛行中のスクロール速度(固定)
+    flightDurationFrames: 600, // 飛行シーケンス全体の長さ(60fpsで約10秒)
+    hitFlashFrames: 30, // エンドロールの文字に触れたときの点滅時間
+    creditLineHeight: 18,
+    creditInterval: { minInterval: 50, maxInterval: 90 }, // エンドロールの行の出現間隔(フレーム数)
+    creditLines: [
+      "THANK YOU FOR PLAYING",
+      "GAME DESIGN & CODE",
+      "PROTOTYPE BY CLAUDE CODE",
+      "TYRANNOSAURUS",
+      "ASTERIORNIS",
+      "GASTORNIS",
+      "PHORUSRHACOS",
+      "CHICKEN",
+      "AND BACK AGAIN",
+      "SEE YOU NEXT LOOP",
+    ],
   },
 
   // エサ

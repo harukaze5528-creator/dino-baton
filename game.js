@@ -13,6 +13,8 @@
   let parents; // 産卵後、後ろに残って画面外へ流れていく親
   let decorations; // 背景に流れる木・岩・草・ビルなどの飾り(種ごとに見た目が変わる)
   let decorTimer;
+  let creditLines; // 飛行ステージで流れてくるエンドロールの文字
+  let creditTimer;
   let distanceMeters;
   let currentSpeed;
   let obstacleTimer;
@@ -32,6 +34,19 @@
 
   function currentSpecies() {
     return CONFIG.species[speciesIndexForGeneration(player.generation)];
+  }
+
+  // 全種を1周するごとに1増える周回数(LOOP)
+  function loopForGeneration(generation) {
+    const cycleLength = CONFIG.difficulty.generationsPerSpecies * CONFIG.species.length;
+    return Math.floor((generation - 1) / cycleLength) + 1;
+  }
+
+  // ニワトリ(最後の種)の、さらに最後の世代かどうか(この世代は通常の成長の代わりに飛行ステージになる)
+  function isFinalChickenGeneration(generation) {
+    const perSpecies = CONFIG.difficulty.generationsPerSpecies;
+    const genInSpecies = (generation - 1) % perSpecies;
+    return speciesIndexForGeneration(generation) === CONFIG.species.length - 1 && genInSpecies === perSpecies - 1;
   }
 
   // プレイヤーの現在の見た目の色(卵だけは種によらず共通、それ以外は種の色)
@@ -56,9 +71,14 @@
   }
 
   // 世代ごとのベース速度(これに成長段階の speedMultiplier を掛けたものが実際のスクロール速度)
+  // 1周の中ではstart→maxのカーブを繰り返し、周回(LOOP)するたびにperLoopBonusぶん底上げする
   function genBaseSpeed(generation) {
     const d = CONFIG.difficulty.baseSpeed;
-    return Math.min(d.start + (generation - 1) * d.perGeneration, d.max);
+    const cycleLength = CONFIG.difficulty.generationsPerSpecies * CONFIG.species.length;
+    const genInLoop = ((generation - 1) % cycleLength) + 1;
+    const loop = loopForGeneration(generation);
+    const base = Math.min(d.start + (genInLoop - 1) * d.perGeneration, d.max);
+    return base + (loop - 1) * d.perLoopBonus;
   }
 
   // 世代が進むほど密になる障害物の出現間隔(フレーム数)
@@ -109,7 +129,7 @@
       invulnFrames: 0,
       generation: 1,
       generationStartDistance: 0,
-      state: "active", // "active" | "laying"(産卵演出中: 減速→停止→[隕石]→加速の段階)
+      state: "active", // "active" | "laying" | "flight"(ニワトリ最後の世代の飛行ステージ)
       layPhase: null, // "decel" | "hold" | "meteor" | "accel"
       layPhaseTimer: 0,
       layStartSpeed: 0,
@@ -121,11 +141,16 @@
       jumpHoldFrames: 0,
       crouching: false,
       crouchPulseFrames: 0, // スマホの下スワイプ用の一時的なしゃがみ時間
+      wasUp: false, // 飛行中の羽ばたき検出用(前フレームでupが押されていたか)
+      flightTimer: 0,
+      flightHitFlash: 0, // エンドロールの文字に触れた時の点滅時間
     };
     obstacles = [];
     foods = [];
     parents = [];
     decorations = [];
+    creditLines = [];
+    creditTimer = 0;
     decorTimer = randomInterval(species.decor);
     distanceMeters = 0;
     currentSpeed = genBaseSpeed(1) * stage.speedMultiplier * species.speedMultiplier;
@@ -361,11 +386,94 @@
   }
 
   // hold(世代結果の表示)が終わったときの共通処理: 孵化して次の速度まで加速再開する
+  // (ニワトリ最後の世代だけは、通常の孵化の代わりに飛行ステージへ入る)
   function finishHold() {
+    if (isFinalChickenGeneration(player.generation)) {
+      startFlight();
+      return;
+    }
     hatch();
     player.layTargetSpeed = genBaseSpeed(player.generation) * CONFIG.stages[1].speedMultiplier * currentSpecies().speedMultiplier;
     player.layPhase = "accel";
     player.layPhaseTimer = CONFIG.layAnimation.accelFrames;
+  }
+
+  // 飛行ステージ開始: ニワトリの姿(ADULT)のまま、羽ばたきで飛びながらエンドロールを避ける
+  function startFlight() {
+    player.stageIndex = CONFIG.stages.length - 1; // ADULTの見た目で飛ぶ
+    resizeToStage();
+    player.vy = 0;
+    player.crouching = false;
+    player.wasUp = false;
+    player.flightTimer = CONFIG.ending.flightDurationFrames;
+    player.flightHitFlash = 0;
+    player.state = "flight";
+    player.layPhase = null;
+    creditLines = [];
+    creditTimer = randomInterval(CONFIG.ending.creditInterval);
+    currentSpeed = CONFIG.ending.flightSpeed;
+  }
+
+  // 飛行中の入力処理: 羽ばたき(upを押した瞬間だけ上向きの力)と左右移動
+  function handleFlightInput() {
+    if (player.input.left) player.x -= CONFIG.player.moveSpeed;
+    if (player.input.right) player.x += CONFIG.player.moveSpeed;
+    player.x = clamp(player.x, CONFIG.player.minX, CONFIG.player.maxX);
+
+    if (player.input.up && !player.wasUp) {
+      player.vy = -CONFIG.ending.flapPower;
+    }
+    player.wasUp = player.input.up;
+  }
+
+  function spawnCreditLine() {
+    const lines = CONFIG.ending.creditLines;
+    const text = lines[Math.floor(Math.random() * lines.length)];
+    ctx.font = `${CONFIG.ending.creditLineHeight}px monospace`;
+    const width = ctx.measureText(text).width;
+    const y = 30 + Math.random() * (groundY - 60 - CONFIG.ending.creditLineHeight);
+    creditLines.push({ text, x: CONFIG.canvasWidth, y, width, height: CONFIG.ending.creditLineHeight });
+  }
+
+  function updateFlight() {
+    handleFlightInput();
+
+    player.vy += CONFIG.ending.gravity;
+    player.y += player.vy;
+    const minY = 10;
+    const maxY = groundY - player.height;
+    if (player.y < minY) {
+      player.y = minY;
+      player.vy = 0;
+    } else if (player.y > maxY) {
+      player.y = maxY;
+      player.vy = 0;
+    }
+
+    if (player.flightHitFlash > 0) player.flightHitFlash--;
+
+    // エンドロールの生成と移動・当たり判定(当たってもダメージはなく、点滅して知らせるだけ)
+    creditTimer--;
+    if (creditTimer <= 0) {
+      spawnCreditLine();
+      creditTimer = randomInterval(CONFIG.ending.creditInterval);
+    }
+    for (let i = creditLines.length - 1; i >= 0; i--) {
+      const line = creditLines[i];
+      line.x -= currentSpeed;
+      if (player.flightHitFlash <= 0 && isColliding(player, line)) {
+        player.flightHitFlash = CONFIG.ending.hitFlashFrames;
+      }
+      if (line.x + line.width < 0) {
+        creditLines.splice(i, 1);
+      }
+    }
+
+    player.flightTimer--;
+    if (player.flightTimer <= 0) {
+      player.y = groundY - player.height; // 産卵のため地面に降りる
+      startLaying(); // 先祖返り: 卵を産んで次のLOOPのティラノサウルスへ
+    }
   }
 
   function updateLaying() {
@@ -454,6 +562,8 @@
 
     if (player.state === "laying") {
       updateLaying(); // このフレームの currentSpeed を決める(減速→停止→加速)
+    } else if (player.state === "flight") {
+      currentSpeed = CONFIG.ending.flightSpeed; // 飛行中は固定速度
     } else {
       // 時間経過では加速しない。速度は「世代のベース速度 × 成長段階の倍率 × 種の倍率」で決まる
       currentSpeed = genBaseSpeed(player.generation) * currentStage().speedMultiplier * currentSpecies().speedMultiplier;
@@ -479,6 +589,8 @@
         player.vy = 0;
         player.onGround = true;
       }
+    } else if (player.state === "flight") {
+      updateFlight();
     }
 
     // 産卵後に残された親: そのまま左へ流れて画面外へ
@@ -497,7 +609,7 @@
       }
     }
 
-    // 障害物・エサ・背景の飾りの生成は演出中(停止中)は止める
+    // 障害物・エサの生成は演出中(停止中)は止める。背景の飾りは飛行中(ビルの上空)も出し続ける
     if (player.state === "active") {
       obstacleTimer--;
       if (obstacleTimer <= 0) {
@@ -510,7 +622,9 @@
         spawnFood();
         foodTimer = randomInterval(foodIntervalRange(player.generation));
       }
+    }
 
+    if (player.state === "active" || player.state === "flight") {
       decorTimer--;
       if (decorTimer <= 0) {
         spawnDecor();
@@ -592,8 +706,10 @@
       ctx.fillRect(p.x, p.y, p.width, p.height);
     });
 
-    // プレイヤー(無敵中は点滅。しゃがみ中は低い矩形になる)
-    const blinking = player.invulnFrames > 0 && Math.floor(player.invulnFrames / 5) % 2 === 0;
+    // プレイヤー(無敵中・エンドロールに触れた直後は点滅。しゃがみ中は低い矩形になる)
+    const blinking =
+      (player.invulnFrames > 0 && Math.floor(player.invulnFrames / 5) % 2 === 0) ||
+      (player.flightHitFlash > 0 && Math.floor(player.flightHitFlash / 5) % 2 === 0);
     if (!blinking) {
       const box = playerHitbox();
       ctx.fillStyle = currentColor();
@@ -610,11 +726,21 @@
     ctx.fillStyle = CONFIG.food.color;
     foods.forEach((f) => ctx.fillRect(f.x, f.y, f.width, f.height));
 
+    // エンドロール(飛行ステージ中に流れてくる文字。避けながら進む)
+    ctx.textAlign = "left";
+    ctx.font = `${CONFIG.ending.creditLineHeight}px monospace`;
+    ctx.fillStyle = "#000000";
+    creditLines.forEach((line) => ctx.fillText(line.text, line.x, line.y + line.height));
+
     // 世代・距離表示
     ctx.fillStyle = "#000000";
     ctx.font = "20px monospace";
     ctx.textAlign = "right";
     ctx.fillText(`GEN ${player.generation} ${formatDistance(distanceMeters)}`, CONFIG.canvasWidth - 10, 30);
+
+    // 周回数(先祖返りするたびに増える)
+    ctx.font = "12px monospace";
+    ctx.fillText(`LOOP ${loopForGeneration(player.generation)}`, CONFIG.canvasWidth - 10, 44);
 
     // 成長段階の進捗表示(動作確認用)
     ctx.textAlign = "left";
@@ -622,7 +748,9 @@
     const stage = currentStage();
     const speciesName = currentSpecies().name;
     let progress = "";
-    if (player.state === "laying") {
+    if (player.state === "flight") {
+      progress = `${speciesName} — FLYING HOME (${Math.ceil(player.flightTimer / 60)}s)`;
+    } else if (player.state === "laying") {
       if (player.layPhase === "meteor") progress = "METEOR IMPACT...";
       else if (player.layPhase !== "hold") progress = "Laying egg...";
     } else if (stage.isEgg) {
