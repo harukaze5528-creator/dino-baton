@@ -47,6 +47,19 @@
     return stage.isEgg ? stage.color : currentSpecies().color;
   }
 
+  // 孵化の直前(通常の卵孵化タイマー、または産卵演出のhold明け孵化)かどうか。
+  // trueなら残りフレーム数を返し、falseならnullを返す
+  function hatchFlashFramesRemaining() {
+    const fx = CONFIG.hatchEffect;
+    if (currentStage().isEgg && player.state === "active" && player.hatchTimer <= fx.flashFrames) {
+      return player.hatchTimer;
+    }
+    if (player.state === "laying" && player.layPhase === "hold" && player.layPhaseTimer <= fx.flashFrames) {
+      return player.layPhaseTimer;
+    }
+    return null;
+  }
+
   // 画面端に表示する年代(その種の中で世代が進むにつれて yearsAgoStart → yearsAgoEnd へ線形に減っていく)
   function currentYearsAgo() {
     const perSpecies = CONFIG.difficulty.generationsPerSpecies;
@@ -361,6 +374,7 @@
       width: player.width,
       height: player.height,
       color: currentColor(),
+      pulseFrames: CONFIG.layPulse.frames, // 産んだ直後、一瞬つぶれてから元に戻る演出用
     });
 
     player.layResult = recordGeneration();
@@ -509,9 +523,10 @@
       }
     }
 
-    // 産卵後に残された親: そのまま左へ流れて画面外へ
+    // 産卵後に残された親: そのまま左へ流れて画面外へ(産んだ直後はしばらくつぶれ演出が残る)
     for (let i = parents.length - 1; i >= 0; i--) {
       parents[i].x -= currentSpeed;
+      if (parents[i].pulseFrames > 0) parents[i].pulseFrames--;
       if (parents[i].x + parents[i].width < 0) {
         parents.splice(i, 1);
       }
@@ -614,17 +629,28 @@
     ctx.fillStyle = "#999999";
     ctx.fillRect(0, groundY, CONFIG.canvasWidth, CONFIG.groundHeight);
 
-    // 産卵後に残された親
+    // 産卵後に残された親(産んだ直後は一瞬つぶれてから元の高さに戻る)
     parents.forEach((p) => {
+      let h = p.height;
+      let y = p.y;
+      if (p.pulseFrames > 0) {
+        const t = p.pulseFrames / CONFIG.layPulse.frames; // 1(直後)→0(戻りきる)
+        const squash = 1 - (1 - CONFIG.layPulse.squashRatio) * t;
+        h = p.height * squash;
+        y = p.y + (p.height - h); // 足元の位置は揃えたまま高さだけつぶす
+      }
       ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, p.width, p.height);
+      ctx.fillRect(p.x, y, p.width, h);
     });
 
-    // プレイヤー(無敵中は点滅。しゃがみ中は低い矩形になる)
+    // プレイヤー(無敵中は点滅。しゃがみ中は低い矩形になる。孵化直前は点滅する)
     const blinking = player.invulnFrames > 0 && Math.floor(player.invulnFrames / 5) % 2 === 0;
     if (!blinking) {
       const box = playerHitbox();
-      ctx.fillStyle = currentColor();
+      const hatchTimer = hatchFlashFramesRemaining();
+      const fx = CONFIG.hatchEffect;
+      const isFlashing = hatchTimer !== null && Math.floor(hatchTimer / fx.flashIntervalFrames) % 2 === 0;
+      ctx.fillStyle = isFlashing ? fx.flashColor : currentColor();
       ctx.fillRect(box.x, box.y, box.width, box.height);
     }
 

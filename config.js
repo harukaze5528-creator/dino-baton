@@ -41,8 +41,8 @@ const CONFIG = {
   // (実際の速度 = difficulty.baseSpeed の世代ごとの値 × speedMultiplier。時間経過では加速しない)
   stages: [
     { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90, speedMultiplier: 0.5 },
-    { name: "CHICK", width: 16, height: 20, jumpPower: 12, color: "#333333", foodToGrow: 3, speedMultiplier: 0.7 },
-    { name: "JUVENILE", width: 22, height: 27, jumpPower: 11, color: "#333333", foodToGrow: 4, speedMultiplier: 1.0 },
+    { name: "CHICK", width: 16, height: 20, jumpPower: 10, color: "#333333", foodToGrow: 3, speedMultiplier: 0.8 },
+    { name: "JUVENILE", width: 22, height: 27, jumpPower: 9, color: "#333333", foodToGrow: 4, speedMultiplier: 1.1 },
     { name: "ADULT", width: 30, height: 38, jumpPower: 8, color: "#333333", foodToGrow: 5, speedMultiplier: 1.3 },
   ],
 
@@ -197,6 +197,20 @@ const CONFIG = {
     decelFrames: 40, // スクロールが今の速度から0まで減速する時間
     holdFrames: 120, // 完全停止して世代の結果を表示している時間(この間に障害物・エサを消し、孵化する)
     accelFrames: 50, // 0から次の世代のヒナの速度まで加速する時間
+  },
+
+  // 演出: 孵化(卵→ヒナ)する直前に卵を点滅させて盛り上げる
+  // (通常の孵化タイマーでも、産卵演出中のhold明けの孵化でも同じ設定を使う)
+  hatchEffect: {
+    flashFrames: 12, // 孵化の何フレーム前から点滅を始めるか
+    flashIntervalFrames: 3, // 点滅の切り替わり周期(このフレームごとに色が反転する)
+    flashColor: "#ffffff",
+  },
+
+  // 演出: 産卵した直後、親を一瞬つぶれさせてから元の形に戻し「産んだ」感を出す
+  layPulse: {
+    frames: 14, // つぶれてから元の高さに戻るまでの時間
+    squashRatio: 0.6, // 一番つぶれた瞬間の高さの倍率
   },
 
   // 隕石イベント: 産卵演出のhold(世代結果表示)の直後に挟む特別な演出。2箇所で発生する
