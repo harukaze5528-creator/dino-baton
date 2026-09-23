@@ -1,4 +1,4 @@
-// フェーズ2(一部): エサ・成長段階(ヒナ→若い恐竜→大人)・段階ごとのジャンプ力と当たり判定
+// フェーズ2: エサ・成長段階(卵→ヒナ→若い恐竜→大人)・産卵と世代交代・若返り・ゲームオーバー
 (function () {
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -14,10 +14,19 @@
   let currentSpeed;
   let obstacleTimer;
   let foodTimer;
+  let generationLog;
   let gameOver;
 
   function currentStage() {
     return CONFIG.stages[player.stageIndex];
+  }
+
+  function resizeToStage() {
+    const stage = currentStage();
+    const bottom = player.y + player.height;
+    player.width = stage.width;
+    player.height = stage.height;
+    player.y = bottom - stage.height;
   }
 
   function reset() {
@@ -31,6 +40,10 @@
       onGround: true,
       stageIndex: 0,
       foodEaten: 0,
+      hatchTimer: stage.hatchFrames,
+      invulnFrames: 0,
+      generation: 1,
+      generationStartDistance: 0,
     };
     obstacles = [];
     foods = [];
@@ -38,6 +51,7 @@
     currentSpeed = CONFIG.scrollSpeed;
     obstacleTimer = randomInterval(CONFIG.obstacle);
     foodTimer = randomInterval(CONFIG.food);
+    generationLog = [];
     gameOver = false;
   }
 
@@ -50,6 +64,7 @@
       reset();
       return;
     }
+    if (currentStage().isEgg) return; // 卵は操作不能(孵化を待つだけ)
     if (player.onGround) {
       player.vy = -currentStage().jumpPower;
       player.onGround = false;
@@ -85,18 +100,65 @@
     );
   }
 
-  function growPlayer() {
-    if (player.stageIndex >= CONFIG.stages.length - 1) return;
+  function recordGeneration() {
+    generationLog.push({
+      generation: player.generation,
+      distance: distanceMeters - player.generationStartDistance,
+    });
+  }
+
+  function hatch() {
+    player.stageIndex = 1; // ヒナ
+    player.foodEaten = 0;
+    resizeToStage();
+  }
+
+  function layEgg() {
+    recordGeneration();
+    player.generation++;
+    player.generationStartDistance = distanceMeters;
+    player.stageIndex = 0; // 卵
+    player.foodEaten = 0;
+    player.hatchTimer = CONFIG.stages[0].hatchFrames;
+    resizeToStage();
+  }
+
+  function advanceStage() {
+    player.stageIndex++;
+    player.foodEaten = 0;
+    resizeToStage();
+  }
+
+  function eatFood() {
+    const stage = currentStage();
+    if (stage.isEgg) return;
     player.foodEaten++;
-    if (player.foodEaten >= currentStage().foodToGrow) {
-      player.stageIndex++;
-      player.foodEaten = 0;
-      const bottom = player.y + player.height;
-      const newStage = currentStage();
-      player.width = newStage.width;
-      player.height = newStage.height;
-      player.y = bottom - newStage.height;
+    if (player.foodEaten < stage.foodToGrow) return;
+
+    const isAdult = player.stageIndex === CONFIG.stages.length - 1;
+    if (isAdult) {
+      layEgg();
+    } else {
+      advanceStage();
     }
+  }
+
+  function takeDamage() {
+    if (currentStage().isEgg) return; // 卵は無敵
+    if (player.invulnFrames > 0) return;
+
+    if (player.stageIndex === 1) {
+      // ヒナで被弾 → 血筋が途絶える
+      gameOver = true;
+      recordGeneration();
+      return;
+    }
+
+    // 若返り: 大人→若い恐竜、若い恐竜→ヒナ
+    player.stageIndex--;
+    player.foodEaten = 0;
+    resizeToStage();
+    player.invulnFrames = CONFIG.invulnFramesAfterHit;
   }
 
   function update() {
@@ -105,6 +167,14 @@
     // 距離が進むほど少しずつスクロールが速くなる
     currentSpeed = CONFIG.scrollSpeed + distanceMeters * CONFIG.speedUpPerMeter;
     distanceMeters += currentSpeed * CONFIG.metersPerFrame;
+
+    if (player.invulnFrames > 0) player.invulnFrames--;
+
+    // 卵は孵化タイマーのみ進める
+    if (currentStage().isEgg) {
+      player.hatchTimer--;
+      if (player.hatchTimer <= 0) hatch();
+    }
 
     // プレイヤーの物理演算
     player.vy += CONFIG.gravity;
@@ -135,7 +205,8 @@
       obstacle.x -= currentSpeed;
 
       if (isColliding(player, obstacle)) {
-        gameOver = true;
+        takeDamage();
+        if (gameOver) break;
       }
 
       if (obstacle.x + obstacle.width < 0) {
@@ -150,7 +221,7 @@
 
       if (isColliding(player, food)) {
         foods.splice(i, 1);
-        growPlayer();
+        eatFood();
         continue;
       }
 
@@ -164,6 +235,10 @@
     return String(Math.floor(meters)).padStart(5, "0") + "m";
   }
 
+  function formatDistanceComma(meters) {
+    return Math.floor(meters).toLocaleString("ja-JP") + "m";
+  }
+
   function draw() {
     ctx.clearRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
@@ -171,9 +246,12 @@
     ctx.fillStyle = "#999999";
     ctx.fillRect(0, groundY, CONFIG.canvasWidth, CONFIG.groundHeight);
 
-    // プレイヤー
-    ctx.fillStyle = currentStage().color;
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    // プレイヤー(無敵中は点滅)
+    const blinking = player.invulnFrames > 0 && Math.floor(player.invulnFrames / 5) % 2 === 0;
+    if (!blinking) {
+      ctx.fillStyle = currentStage().color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
 
     // 障害物
     ctx.fillStyle = CONFIG.obstacle.color;
@@ -183,28 +261,43 @@
     ctx.fillStyle = CONFIG.food.color;
     foods.forEach((f) => ctx.fillRect(f.x, f.y, f.width, f.height));
 
-    // 距離表示
+    // 世代・距離表示
     ctx.fillStyle = "#000000";
     ctx.font = "20px monospace";
     ctx.textAlign = "right";
-    ctx.fillText(formatDistance(distanceMeters), CONFIG.canvasWidth - 10, 30);
+    ctx.fillText(`${player.generation}代目 ${formatDistance(distanceMeters)}`, CONFIG.canvasWidth - 10, 30);
 
-    // 成長段階表示(動作確認用)
+    // 成長段階の進捗表示(動作確認用)
     ctx.textAlign = "left";
     ctx.font = "16px monospace";
     const stage = currentStage();
-    const progress =
-      player.stageIndex >= CONFIG.stages.length - 1
-        ? stage.name
-        : `${stage.name} (${player.foodEaten}/${stage.foodToGrow})`;
+    let progress;
+    if (stage.isEgg) {
+      progress = `${stage.name} (孵化まで ${Math.ceil(player.hatchTimer / 60)}s)`;
+    } else if (player.stageIndex === CONFIG.stages.length - 1) {
+      progress = `${stage.name} (産卵まで ${player.foodEaten}/${stage.foodToGrow})`;
+    } else {
+      progress = `${stage.name} (${player.foodEaten}/${stage.foodToGrow})`;
+    }
     ctx.fillText(progress, 10, 25);
 
     if (gameOver) {
       ctx.textAlign = "center";
       ctx.font = "28px monospace";
-      ctx.fillText("GAME OVER", CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2 - 10);
+      ctx.fillText("GAME OVER", CONFIG.canvasWidth / 2, 90);
+
+      ctx.font = "18px monospace";
+      ctx.fillText(`${generationLog.length}世代で ${formatDistanceComma(distanceMeters)}`, CONFIG.canvasWidth / 2, 125);
+
+      ctx.font = "14px monospace";
+      const maxRows = 6;
+      const shown = generationLog.slice(-maxRows);
+      shown.forEach((g, i) => {
+        ctx.fillText(`${g.generation}代目: ${Math.floor(g.distance)}m`, CONFIG.canvasWidth / 2, 150 + i * 18);
+      });
+
       ctx.font = "16px monospace";
-      ctx.fillText("タップ / クリック / スペースキーでリトライ", CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2 + 20);
+      ctx.fillText("タップ / クリック / スペースキーでリトライ", CONFIG.canvasWidth / 2, 150 + shown.length * 18 + 20);
     }
   }
 
