@@ -19,6 +19,7 @@
   let foodTimer;
   let generationLog;
   let gameOver;
+  let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
 
   function currentStage() {
     return CONFIG.stages[player.stageIndex];
@@ -153,6 +154,7 @@
     foodTimer = randomInterval(foodIntervalRange(1));
     generationLog = [];
     gameOver = false;
+    retryCooldown = 0;
   }
 
   function randomInterval(cfg) {
@@ -458,6 +460,7 @@
     if (player.stageIndex === 1) {
       // ヒナで被弾 → 血筋が途絶える
       gameOver = true;
+      retryCooldown = CONFIG.retryCooldownFrames;
       recordGeneration();
       return;
     }
@@ -470,7 +473,10 @@
   }
 
   function update() {
-    if (gameOver) return;
+    if (gameOver) {
+      if (retryCooldown > 0) retryCooldown--;
+      return;
+    }
 
     if (player.invulnFrames > 0) player.invulnFrames--;
 
@@ -734,7 +740,7 @@
     if (!direction) return;
     e.preventDefault();
     if (gameOver) {
-      reset();
+      if (retryCooldown <= 0) reset();
       return;
     }
     player.input[direction] = true;
@@ -747,7 +753,7 @@
 
   canvas.addEventListener("mousedown", () => {
     if (gameOver) {
-      reset();
+      if (retryCooldown <= 0) reset();
       return;
     }
     player.input.up = true;
@@ -763,7 +769,7 @@
     (e) => {
       e.preventDefault();
       if (gameOver) {
-        reset();
+        if (retryCooldown <= 0) reset();
         touchStart = null;
         return;
       }
