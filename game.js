@@ -259,16 +259,12 @@
     const visual = obstacleVisual(segmentKind);
     const birdHeight = visual.height;
 
+    // 一番下(地面際)は gapHeight 分だけ必ず開けておく。しゃがめばどの種・成長段階でも通り抜けられる
     const spanTop = kind.topMargin;
-    const spanBottom = groundY;
-    const gapTop = spanTop + Math.random() * (spanBottom - spanTop - kind.gapHeight);
-    const gapBottom = gapTop + kind.gapHeight;
+    const gapTop = groundY - kind.gapHeight;
     const x = CONFIG.canvasWidth;
 
     for (let y = spanTop; y + birdHeight <= gapTop; y += birdHeight) {
-      obstacles.push({ kind: kind.id, behavior: "overhead", x, y, width: visual.width, height: birdHeight, color: visual.color });
-    }
-    for (let y = gapBottom; y + birdHeight <= spanBottom; y += birdHeight) {
       obstacles.push({ kind: kind.id, behavior: "overhead", x, y, width: visual.width, height: birdHeight, color: visual.color });
     }
   }
