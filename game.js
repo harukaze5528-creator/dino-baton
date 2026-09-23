@@ -81,14 +81,6 @@
     };
   }
 
-  // 段階ごとに必要なエサの数(世代1だけ firstGeneration.foodToGrowMultiplier で短縮する)
-  function foodTarget(stage, generation) {
-    if (generation === 1) {
-      return Math.max(1, Math.round(stage.foodToGrow * CONFIG.difficulty.firstGeneration.foodToGrowMultiplier));
-    }
-    return stage.foodToGrow;
-  }
-
   function resizeToStage() {
     const stage = currentStage();
     const sizeMultiplier = currentSpecies().sizeMultiplier;
@@ -386,7 +378,7 @@
     const stage = currentStage();
     if (stage.isEgg) return;
     player.foodEaten++;
-    if (player.foodEaten < foodTarget(stage, player.generation)) return;
+    if (player.foodEaten < stage.foodToGrow) return;
 
     const isAdult = player.stageIndex === CONFIG.stages.length - 1;
     if (isAdult) {
@@ -594,9 +586,9 @@
     } else if (stage.isEgg) {
       progress = `${speciesName} EGG (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
     } else if (player.stageIndex === CONFIG.stages.length - 1) {
-      progress = `${speciesName} ${stage.name} (lay egg: ${player.foodEaten}/${foodTarget(stage, player.generation)})`;
+      progress = `${speciesName} ${stage.name} (lay egg: ${player.foodEaten}/${stage.foodToGrow})`;
     } else {
-      progress = `${speciesName} ${stage.name} (${player.foodEaten}/${foodTarget(stage, player.generation)})`;
+      progress = `${speciesName} ${stage.name} (${player.foodEaten}/${stage.foodToGrow})`;
     }
     ctx.fillText(progress, 10, 25);
 

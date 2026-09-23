@@ -35,20 +35,19 @@ const CONFIG = {
 
   // 成長段階: EGG → CHICK → JUVENILE → ADULT
   // jumpPower が大きいほど高く跳べる。foodToGrow は次の段階に育つ(ADULTは産卵する)までに必要なエサの数
-  // (世代1だけは difficulty.firstGeneration.foodToGrowMultiplier で全体的に少なくなる)
+  // (全世代で共通。世代ごとに変えず統一する)
   // EGGだけは isEgg:true で、エサではなく hatchFrames 経過で自動的にCHICKへ孵化する
   // speedMultiplier はスクロール速度の段階別の倍率。ヒナが最も遅く、大人が最も速い
   // (実際の速度 = difficulty.baseSpeed の世代ごとの値 × speedMultiplier。時間経過では加速しない)
   stages: [
     { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90, speedMultiplier: 0.5 },
-    { name: "CHICK", width: 16, height: 20, jumpPower: 14, color: "#333333", foodToGrow: 6, speedMultiplier: 0.7 },
-    { name: "JUVENILE", width: 22, height: 27, jumpPower: 11, color: "#333333", foodToGrow: 9, speedMultiplier: 1.0 },
-    { name: "ADULT", width: 30, height: 38, jumpPower: 8, color: "#333333", foodToGrow: 12, speedMultiplier: 1.3 },
+    { name: "CHICK", width: 16, height: 20, jumpPower: 14, color: "#333333", foodToGrow: 3, speedMultiplier: 0.7 },
+    { name: "JUVENILE", width: 22, height: 27, jumpPower: 11, color: "#333333", foodToGrow: 4, speedMultiplier: 1.0 },
+    { name: "ADULT", width: 30, height: 38, jumpPower: 8, color: "#333333", foodToGrow: 5, speedMultiplier: 1.3 },
   ],
 
-  // 世代ごとの難易度カーブ。世代1は特別に短く・簡単にし、以降は世代が進むごとに
-  // ベース速度と障害物密度を上げ、エサの出現頻度を下げる(必要エサ数は変えないことで、
-  // 1世代の長さ=ゴールまでのエサの量そのものは大きく変えない)
+  // 世代ごとの難易度カーブ。成長に必要なエサ数(stages[].foodToGrow)は全世代で統一し、
+  // その代わりに世代が進むごとにベース速度と障害物密度を上げ、エサの出現頻度を下げていく
   difficulty: {
     // ベース速度(このあと段階ごとの speedMultiplier を掛けたものが実際のスクロール速度になる)
     baseSpeed: {
@@ -70,11 +69,6 @@ const CONFIG = {
       increasePerGeneration: 4,
       ceiling: 160, // これより長くはしない
     },
-    // 世代1だけの特別調整(短く・簡単に)
-    firstGeneration: {
-      foodToGrowMultiplier: 0.45, // 成長に必要なエサ数を半分弱にして、すぐ一周できるようにする
-    },
-
     generationsPerSpecies: 4, // 何世代ごとに次の種へ移るか
   },
 
