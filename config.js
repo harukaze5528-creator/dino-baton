@@ -3,6 +3,7 @@ const CONFIG = {
   canvasWidth: 800,
   canvasHeight: 300,
   groundHeight: 40,
+  backgroundParallax: 0.4, // 背景の飾り(木・岩・草・ビルなど)がスクロールに対してどれくらいの速さで流れるか
 
   // キャラクター(四角形)
   player: {
@@ -51,7 +52,72 @@ const CONFIG = {
     firstGeneration: {
       foodToGrowMultiplier: 0.45, // 成長に必要なエサ数を半分弱にして、すぐ一周できるようにする
     },
+
+    generationsPerSpecies: 4, // 何世代ごとに次の種へ移るか
   },
+
+  // 種の移り変わり(年代順)。ティラノサウルス→…→ニワトリで一周し、以降はまた最初から
+  // (先祖返りのループそのものはステップ4で実装。ここでは種ごとのパラメータのみ定義する)
+  // jumpMultiplier/sizeMultiplier/speedMultiplier は成長段階側の値にさらに掛けて種ごとの個性を出す
+  // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
+  // decor は背景に流れる簡単な図形(木・岩・草・ビルなど)のサイズと出現間隔
+  species: [
+    {
+      name: "TYRANNOSAURUS",
+      color: "#3a2f2f",
+      jumpMultiplier: 0.9,
+      sizeMultiplier: 1.15,
+      speedMultiplier: 0.95,
+      yearsAgoStart: 68000000,
+      yearsAgoEnd: 66000000,
+      bgColor: "#dfe8d0",
+      decor: { color: "#7a9c6a", width: 12, height: 50, minInterval: 100, maxInterval: 160 },
+    },
+    {
+      name: "ASTERIORNIS",
+      color: "#4a3f2a",
+      jumpMultiplier: 1.3,
+      sizeMultiplier: 0.6,
+      speedMultiplier: 1.0,
+      yearsAgoStart: 66000000,
+      yearsAgoEnd: 60000000,
+      bgColor: "#e8dcc8",
+      decor: { color: "#a68a6a", width: 24, height: 18, minInterval: 130, maxInterval: 200 },
+    },
+    {
+      name: "GASTORNIS",
+      color: "#2f3a2f",
+      jumpMultiplier: 0.85,
+      sizeMultiplier: 1.2,
+      speedMultiplier: 0.9,
+      yearsAgoStart: 56000000,
+      yearsAgoEnd: 40000000,
+      bgColor: "#dbe8d5",
+      decor: { color: "#6a8c5a", width: 14, height: 45, minInterval: 100, maxInterval: 160 },
+    },
+    {
+      name: "PHORUSRHACOS",
+      color: "#3a3a2a",
+      jumpMultiplier: 1.0,
+      sizeMultiplier: 1.0,
+      speedMultiplier: 1.25,
+      yearsAgoStart: 25000000,
+      yearsAgoEnd: 2000000,
+      bgColor: "#eef0c8",
+      decor: { color: "#b8c46a", width: 8, height: 14, minInterval: 60, maxInterval: 110 },
+    },
+    {
+      name: "CHICKEN",
+      color: "#4a4a4a",
+      jumpMultiplier: 1.0,
+      sizeMultiplier: 0.5,
+      speedMultiplier: 1.0,
+      yearsAgoStart: 8000,
+      yearsAgoEnd: 0,
+      bgColor: "#dfe3e8",
+      decor: { color: "#8a94a0", width: 30, height: 70, minInterval: 140, maxInterval: 220 },
+    },
+  ],
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
   invulnFramesAfterHit: 90,

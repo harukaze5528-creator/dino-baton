@@ -11,6 +11,8 @@
   let obstacles;
   let foods;
   let parents; // 産卵後、後ろに残って画面外へ流れていく親
+  let decorations; // 背景に流れる木・岩・草・ビルなどの飾り(種ごとに見た目が変わる)
+  let decorTimer;
   let distanceMeters;
   let currentSpeed;
   let obstacleTimer;
@@ -20,6 +22,37 @@
 
   function currentStage() {
     return CONFIG.stages[player.stageIndex];
+  }
+
+  // 世代からその時点の種を求める(generationsPerSpecies世代ごとに次の種へ。最後まで行くと最初に戻る)
+  function speciesIndexForGeneration(generation) {
+    const perSpecies = CONFIG.difficulty.generationsPerSpecies;
+    return Math.floor((generation - 1) / perSpecies) % CONFIG.species.length;
+  }
+
+  function currentSpecies() {
+    return CONFIG.species[speciesIndexForGeneration(player.generation)];
+  }
+
+  // プレイヤーの現在の見た目の色(卵だけは種によらず共通、それ以外は種の色)
+  function currentColor() {
+    const stage = currentStage();
+    return stage.isEgg ? stage.color : currentSpecies().color;
+  }
+
+  // 画面端に表示する年代(その種の中で世代が進むにつれて yearsAgoStart → yearsAgoEnd へ線形に減っていく)
+  function currentYearsAgo() {
+    const perSpecies = CONFIG.difficulty.generationsPerSpecies;
+    const species = currentSpecies();
+    const genInSpecies = (player.generation - 1) % perSpecies;
+    const progress = perSpecies > 1 ? genInSpecies / (perSpecies - 1) : 1;
+    return species.yearsAgoStart + (species.yearsAgoEnd - species.yearsAgoStart) * progress;
+  }
+
+  function formatYearsAgo(years) {
+    const rounded = Math.round(years);
+    if (rounded <= 0) return "NOW";
+    return `${rounded.toLocaleString("en-US")} YEARS AGO`;
   }
 
   // 世代ごとのベース速度(これに成長段階の speedMultiplier を掛けたものが実際のスクロール速度)
@@ -58,19 +91,24 @@
 
   function resizeToStage() {
     const stage = currentStage();
+    const sizeMultiplier = currentSpecies().sizeMultiplier;
+    const width = stage.width * sizeMultiplier;
+    const height = stage.height * sizeMultiplier;
     const bottom = player.y + player.height;
-    player.width = stage.width;
-    player.height = stage.height;
-    player.y = bottom - stage.height;
+    player.width = width;
+    player.height = height;
+    player.y = bottom - height;
   }
 
   function reset() {
     const stage = CONFIG.stages[0];
+    const species = CONFIG.species[0];
+    const height = stage.height * species.sizeMultiplier;
     player = {
       x: CONFIG.player.x,
-      y: groundY - stage.height,
-      width: stage.width,
-      height: stage.height,
+      y: groundY - height,
+      width: stage.width * species.sizeMultiplier,
+      height,
       vy: 0,
       onGround: true,
       stageIndex: 0,
@@ -89,8 +127,10 @@
     obstacles = [];
     foods = [];
     parents = [];
+    decorations = [];
+    decorTimer = randomInterval(species.decor);
     distanceMeters = 0;
-    currentSpeed = genBaseSpeed(1) * stage.speedMultiplier;
+    currentSpeed = genBaseSpeed(1) * stage.speedMultiplier * species.speedMultiplier;
     obstacleTimer = randomInterval(obstacleIntervalRange(1));
     foodTimer = randomInterval(foodIntervalRange(1));
     generationLog = [];
@@ -109,7 +149,7 @@
     if (currentStage().isEgg) return; // 卵は操作不能(孵化を待つだけ)
     if (player.state === "laying") return; // 産卵演出中は操作不能
     if (player.onGround) {
-      player.vy = -currentStage().jumpPower;
+      player.vy = -currentStage().jumpPower * currentSpecies().jumpMultiplier;
       player.onGround = false;
     }
   }
@@ -131,6 +171,17 @@
       y: groundY - CONFIG.food.height - heightAboveGround,
       width: CONFIG.food.width,
       height: CONFIG.food.height,
+    });
+  }
+
+  function spawnDecor() {
+    const decor = currentSpecies().decor;
+    decorations.push({
+      x: CONFIG.canvasWidth,
+      y: groundY - decor.height,
+      width: decor.width,
+      height: decor.height,
+      color: decor.color,
     });
   }
 
@@ -160,13 +211,12 @@
 
   function startLaying() {
     // 産卵演出を開始: 親をその場に残し、プレイヤーは卵に切り替わる(孵化はholdフェーズの終わりで起きる)
-    const adultStage = currentStage();
     parents.push({
       x: player.x,
       y: player.y,
       width: player.width,
       height: player.height,
-      color: adultStage.color,
+      color: currentColor(),
     });
 
     player.layResult = recordGeneration();
@@ -202,7 +252,7 @@
       if (player.layPhaseTimer <= 0) {
         hatch();
         // 産卵で次世代のヒナの速度に戻る
-        player.layTargetSpeed = genBaseSpeed(player.generation) * CONFIG.stages[1].speedMultiplier;
+        player.layTargetSpeed = genBaseSpeed(player.generation) * CONFIG.stages[1].speedMultiplier * currentSpecies().speedMultiplier;
         player.layPhase = "accel";
         player.layPhaseTimer = anim.accelFrames;
       }
@@ -264,8 +314,8 @@
     if (player.state === "laying") {
       updateLaying(); // このフレームの currentSpeed を決める(減速→停止→加速)
     } else {
-      // 時間経過では加速しない。速度は「世代のベース速度 × 成長段階の倍率」で決まる
-      currentSpeed = genBaseSpeed(player.generation) * currentStage().speedMultiplier;
+      // 時間経過では加速しない。速度は「世代のベース速度 × 成長段階の倍率 × 種の倍率」で決まる
+      currentSpeed = genBaseSpeed(player.generation) * currentStage().speedMultiplier * currentSpecies().speedMultiplier;
     }
     distanceMeters += currentSpeed * CONFIG.metersPerFrame;
 
@@ -294,7 +344,15 @@
       }
     }
 
-    // 障害物・エサの生成は演出中(停止中)は止める
+    // 背景の飾り: 前景よりゆっくり流れる(パララックス)
+    for (let i = decorations.length - 1; i >= 0; i--) {
+      decorations[i].x -= currentSpeed * CONFIG.backgroundParallax;
+      if (decorations[i].x + decorations[i].width < 0) {
+        decorations.splice(i, 1);
+      }
+    }
+
+    // 障害物・エサ・背景の飾りの生成は演出中(停止中)は止める
     if (player.state === "active") {
       obstacleTimer--;
       if (obstacleTimer <= 0) {
@@ -306,6 +364,12 @@
       if (foodTimer <= 0) {
         spawnFood();
         foodTimer = randomInterval(foodIntervalRange(player.generation));
+      }
+
+      decorTimer--;
+      if (decorTimer <= 0) {
+        spawnDecor();
+        decorTimer = randomInterval(currentSpecies().decor);
       }
     }
 
@@ -352,6 +416,16 @@
   function draw() {
     ctx.clearRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
+    // 背景(種ごとに色を変える)
+    ctx.fillStyle = currentSpecies().bgColor;
+    ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+    // 背景の飾り(木・岩・草・ビルなど。種ごとに見た目が変わる)
+    decorations.forEach((d) => {
+      ctx.fillStyle = d.color;
+      ctx.fillRect(d.x, d.y, d.width, d.height);
+    });
+
     // 地面
     ctx.fillStyle = "#999999";
     ctx.fillRect(0, groundY, CONFIG.canvasWidth, CONFIG.groundHeight);
@@ -365,7 +439,7 @@
     // プレイヤー(無敵中は点滅)
     const blinking = player.invulnFrames > 0 && Math.floor(player.invulnFrames / 5) % 2 === 0;
     if (!blinking) {
-      ctx.fillStyle = currentStage().color;
+      ctx.fillStyle = currentColor();
       ctx.fillRect(player.x, player.y, player.width, player.height);
     }
 
@@ -387,17 +461,23 @@
     ctx.textAlign = "left";
     ctx.font = "16px monospace";
     const stage = currentStage();
+    const speciesName = currentSpecies().name;
     let progress = "";
     if (player.state === "laying") {
       if (player.layPhase !== "hold") progress = "Laying egg...";
     } else if (stage.isEgg) {
-      progress = `${stage.name} (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
+      progress = `${speciesName} EGG (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
     } else if (player.stageIndex === CONFIG.stages.length - 1) {
-      progress = `${stage.name} (lay egg: ${player.foodEaten}/${foodTarget(stage, player.generation)})`;
+      progress = `${speciesName} ${stage.name} (lay egg: ${player.foodEaten}/${foodTarget(stage, player.generation)})`;
     } else {
-      progress = `${stage.name} (${player.foodEaten}/${foodTarget(stage, player.generation)})`;
+      progress = `${speciesName} ${stage.name} (${player.foodEaten}/${foodTarget(stage, player.generation)})`;
     }
     ctx.fillText(progress, 10, 25);
+
+    // 年代表示(画面端。進むにつれて減っていき、ニワトリで NOW になる)
+    ctx.textAlign = "left";
+    ctx.font = "14px monospace";
+    ctx.fillText(formatYearsAgo(currentYearsAgo()), 10, CONFIG.canvasHeight - 10);
 
     // 産卵演出: 完全停止中は画面中央にその世代の結果を表示
     if (player.state === "laying" && player.layPhase === "hold" && player.layResult) {
