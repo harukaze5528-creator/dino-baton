@@ -73,10 +73,12 @@
   }
 
   // 世代ごとのベース速度(これに成長段階の speedMultiplier を掛けたものが実際のスクロール速度)
-  // 世代をまたぐたびに少しずつ増え続ける(種が変わっても周回してもリセットしない)
+  // flatUntilGenerationまでは一定。それ以降は世代をまたぐたびに少しずつ増え続ける
+  // (種が変わっても周回してもリセットしない)
   function genBaseSpeed(generation) {
     const d = CONFIG.difficulty.baseSpeed;
-    return Math.min(d.start + (generation - 1) * d.perGeneration, d.max);
+    const extraGens = Math.max(0, generation - d.flatUntilGeneration);
+    return Math.min(d.start + extraGens * d.perGeneration, d.max);
   }
 
   // 世代が進むほど密になる障害物の出現間隔(フレーム数)

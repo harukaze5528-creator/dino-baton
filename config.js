@@ -50,10 +50,12 @@ const CONFIG = {
   // その代わりに世代が進むごとにベース速度と障害物密度を上げ、エサの出現頻度を下げていく
   difficulty: {
     // ベース速度(このあと段階ごとの speedMultiplier を掛けたものが実際のスクロール速度になる)
-    // 世代を追うごとに少しずつ上がり続け、種が変わっても周回(LOOP)してもリセットしない
+    // flatUntilGenerationまでは一定speedで、それ以降は世代をまたぐたびに少しずつ上がり続ける
+    // (種が変わっても周回[LOOP]してもリセットしない)
     baseSpeed: {
-      start: 7, // 世代1のベース速度
-      perGeneration: 0.3, // 世代が1つ進むごとに増える量(gen5以降も含め、世代をまたぐたびに効く)
+      start: 7, // flatUntilGenerationまでのベース速度
+      flatUntilGeneration: 5, // ここまでは速度を上げない(1周目=1〜5世代はまだ一定のまま)
+      perGeneration: 0.3, // flatUntilGenerationを過ぎたあと、世代が1つ進むごとに増える量
       max: 30, // 上限(実質かなり遠い将来の安全装置)
     },
     // 障害物の出現間隔(フレーム数)。短いほど密度が高い
