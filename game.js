@@ -21,6 +21,48 @@
   let gameOver;
   let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
 
+  // プレイヤーのドット絵スプライト(成長段階ごとに1枚、CONFIG.stagesと同じ並び)。
+  // assets/配下に該当ファイルがない場合はnullのままになり、その段階は今まで通り四角形で描画される
+  // (アセットが揃っていなくてもゲームが壊れないようにするため)
+  const playerSpriteFiles = ["assets/egg.png", "assets/chick.png", "assets/juvenile.png", "assets/adult.png"];
+  const playerSprites = playerSpriteFiles.map(() => null);
+  playerSpriteFiles.forEach((src, i) => {
+    const img = new Image();
+    img.onload = () => { playerSprites[i] = img; };
+    img.onerror = () => { playerSprites[i] = null; };
+    img.src = src;
+  });
+
+  // 色付け済みスプライトのキャッシュ(スプライト×色の組み合わせごとに1回だけ生成する)
+  const tintedSpriteCache = {};
+  function tintedSprite(img, color) {
+    const key = img.src + "|" + color;
+    let tinted = tintedSpriteCache[key];
+    if (!tinted) {
+      tinted = document.createElement("canvas");
+      tinted.width = img.naturalWidth;
+      tinted.height = img.naturalHeight;
+      const tctx = tinted.getContext("2d");
+      tctx.drawImage(img, 0, 0);
+      tctx.globalCompositeOperation = "source-in";
+      tctx.fillStyle = color;
+      tctx.fillRect(0, 0, tinted.width, tinted.height);
+      tintedSpriteCache[key] = tinted;
+    }
+    return tinted;
+  }
+
+  // スプライトがあればそれを色付けして描画し、なければ今まで通り四角形を描画する
+  function drawCharacter(stageIndex, x, y, width, height, color) {
+    const sprite = playerSprites[stageIndex];
+    if (sprite) {
+      ctx.drawImage(tintedSprite(sprite, color), x, y, width, height);
+    } else {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, width, height);
+    }
+  }
+
   function currentStage() {
     return CONFIG.stages[player.stageIndex];
   }
@@ -630,6 +672,7 @@
     ctx.fillRect(0, groundY, CONFIG.canvasWidth, CONFIG.groundHeight);
 
     // 産卵後に残された親(産んだ直後は一瞬つぶれてから元の高さに戻る)
+    // 親は産卵直前(ADULT)の姿のまま残るので、常にADULTのスプライト(stageIndex 3)を使う
     parents.forEach((p) => {
       let h = p.height;
       let y = p.y;
@@ -639,8 +682,7 @@
         h = p.height * squash;
         y = p.y + (p.height - h); // 足元の位置は揃えたまま高さだけつぶす
       }
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, y, p.width, h);
+      drawCharacter(CONFIG.stages.length - 1, p.x, y, p.width, h, p.color);
     });
 
     // プレイヤー(無敵中は点滅。しゃがみ中は低い矩形になる。孵化直前は点滅する)
@@ -650,8 +692,8 @@
       const hatchTimer = hatchFlashFramesRemaining();
       const fx = CONFIG.hatchEffect;
       const isFlashing = hatchTimer !== null && Math.floor(hatchTimer / fx.flashIntervalFrames) % 2 === 0;
-      ctx.fillStyle = isFlashing ? fx.flashColor : currentColor();
-      ctx.fillRect(box.x, box.y, box.width, box.height);
+      const color = isFlashing ? fx.flashColor : currentColor();
+      drawCharacter(player.stageIndex, box.x, box.y, box.width, box.height, color);
     }
 
     // 障害物
