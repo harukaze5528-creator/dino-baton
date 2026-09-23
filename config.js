@@ -75,6 +75,10 @@ const CONFIG = {
     generationsPerSpecies: 4, // 何世代ごとに次の種へ移るか
   },
 
+  // 1周目が「NOW」に達したあと(=先祖返り後)は年代表示が「n YEARS LATER」形式に切り替わり、
+  // 世代が進むごとに増え続ける(このあとは「YEARS AGO」には戻らない)
+  yearsLaterPerGeneration: 1000,
+
   // 種の移り変わり(年代順)。ティラノサウルス→…→ニワトリで一周し、以降はまた最初から
   // (先祖返りのループそのものはステップ4で実装。ここでは種ごとのパラメータのみ定義する)
   // jumpMultiplier/sizeMultiplier/speedMultiplier は成長段階側の値にさらに掛けて種ごとの個性を出す

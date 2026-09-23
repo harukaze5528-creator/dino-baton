@@ -61,6 +61,17 @@
     return `${rounded.toLocaleString("en-US")} YEARS AGO`;
   }
 
+  // 画面端に表示する年代の文字列。1周目は「n YEARS AGO」→「NOW」、
+  // 先祖返り後(2周目以降)は「NOW」に戻らず「n YEARS LATER」として増え続ける
+  function currentYearsLabel() {
+    const cycleLength = CONFIG.difficulty.generationsPerSpecies * CONFIG.species.length;
+    if (player.generation <= cycleLength) {
+      return formatYearsAgo(currentYearsAgo());
+    }
+    const yearsLater = (player.generation - cycleLength) * CONFIG.yearsLaterPerGeneration;
+    return `${yearsLater.toLocaleString("en-US")} YEARS LATER`;
+  }
+
   // 世代ごとのベース速度(これに成長段階の speedMultiplier を掛けたものが実際のスクロール速度)
   // 1周の中ではstart→maxのカーブを繰り返し、周回(LOOP)するたびにperLoopBonusぶん底上げする
   function genBaseSpeed(generation) {
@@ -654,7 +665,7 @@
     // 年代表示(画面端。進むにつれて減っていき、ニワトリで NOW になる)
     ctx.textAlign = "left";
     ctx.font = "14px monospace";
-    ctx.fillText(formatYearsAgo(currentYearsAgo()), 10, CONFIG.canvasHeight - 10);
+    ctx.fillText(currentYearsLabel(), 10, CONFIG.canvasHeight - 10);
 
     // 産卵演出: 完全停止中は画面中央にその世代の結果を表示
     if (player.state === "laying" && player.layPhase === "hold" && player.layResult) {
