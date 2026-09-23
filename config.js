@@ -3,7 +3,20 @@ const CONFIG = {
   canvasWidth: 800,
   canvasHeight: 300,
   groundHeight: 40,
+  skyColor: "#f7f7f7", // 空(背景)の色。種によらず全種共通(原作のChrome恐竜ゲームと同じ白系)
   backgroundParallax: 0.4, // 背景の飾り(木・岩・草・ビルなど)がスクロールに対してどれくらいの速さで流れるか
+
+  // 空を流れる雲。種によらず共通。decorationsより遠くにある想定でさらにゆっくり流れる
+  clouds: {
+    color: "#dcdcdc",
+    width: 46,
+    height: 14,
+    minY: 20,
+    maxY: 90,
+    minInterval: 150,
+    maxInterval: 260,
+    parallax: 0.15,
+  },
 
   // キャラクター(四角形)
   player: {
@@ -82,7 +95,7 @@ const CONFIG = {
   // 種の移り変わり(年代順)。ティラノサウルス→…→ニワトリで一周し、以降はまた最初から
   // jumpMultiplier/sizeMultiplier/speedMultiplier はティラノサウルスの数値に統一。
   // 例外はニワトリのjumpMultiplierだけ(飛べない鳥なので低め)。それ以外で種ごとに
-  // 変わるのは見た目の色・背景・障害物の意匠だけ
+  // 変わるのは見た目の色・装飾(decor)・障害物の意匠だけ(空の色は全種共通。CONFIG.skyColorを参照)
   // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
   // decor は背景に流れる簡単な図形(木・岩・草・ビルなど)のサイズと出現間隔
   // obstacleVisuals は障害物の種類ごとの見た目の上書き(仕組みは共通、見た目だけ時代で変える)
@@ -95,7 +108,6 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 68000000,
       yearsAgoEnd: 66000000,
-      bgColor: "#dfe8d0",
       decor: { color: "#7a9c6a", width: 12, height: 50, minInterval: 100, maxInterval: 160 },
       obstacleVisuals: {
         spike: { color: "#4a6a2a", width: 14, height: 28 }, // トゲのある植物
@@ -109,7 +121,6 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 66000000,
       yearsAgoEnd: 60000000,
-      bgColor: "#e8dcc8",
       decor: { color: "#a68a6a", width: 24, height: 18, minInterval: 130, maxInterval: 200 },
       obstacleVisuals: {
         spike: { color: "#7a6a52", width: 16, height: 22 }, // 枯れた棘の茂み
@@ -123,7 +134,6 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 56000000,
       yearsAgoEnd: 40000000,
-      bgColor: "#dbe8d5",
       decor: { color: "#6a8c5a", width: 14, height: 45, minInterval: 100, maxInterval: 160 },
       obstacleVisuals: {
         spike: { color: "#3a5a2a", width: 14, height: 28 }, // トゲの茂み
@@ -137,7 +147,6 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 25000000,
       yearsAgoEnd: 2000000,
-      bgColor: "#eef0c8",
       decor: { color: "#b8c46a", width: 8, height: 14, minInterval: 60, maxInterval: 110 },
       obstacleVisuals: {
         spike: { color: "#a68a4a", width: 16, height: 20 }, // 乾いた棘の茂み
@@ -151,7 +160,6 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 8000,
       yearsAgoEnd: 0,
-      bgColor: "#dfe3e8",
       decor: { color: "#8a94a0", width: 30, height: 70, minInterval: 140, maxInterval: 220 },
       obstacleVisuals: {
         spike: { color: "#4a8a4a", width: 20, height: 20 }, // サボテン

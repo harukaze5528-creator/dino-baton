@@ -13,6 +13,8 @@
   let parents; // 産卵後、後ろに残って画面外へ流れていく親
   let decorations; // 背景に流れる木・岩・草・ビルなどの飾り(種ごとに見た目が変わる)
   let decorTimer;
+  let clouds; // 空を流れる雲(種によらず共通)
+  let cloudTimer;
   let distanceMeters;
   let currentSpeed;
   let obstacleTimer;
@@ -202,6 +204,8 @@
     parents = [];
     decorations = [];
     decorTimer = randomInterval(species.decor);
+    clouds = [];
+    cloudTimer = randomInterval(CONFIG.clouds);
     distanceMeters = 0;
     currentSpeed = genBaseSpeed(1) * stage.speedMultiplier * species.speedMultiplier;
     obstacleTimer = randomInterval(obstacleIntervalRange(1));
@@ -363,6 +367,16 @@
       width: decor.width,
       height: decor.height,
       color: decor.color,
+    });
+  }
+
+  function spawnCloud() {
+    const c = CONFIG.clouds;
+    clouds.push({
+      x: CONFIG.canvasWidth,
+      y: c.minY + Math.random() * (c.maxY - c.minY),
+      width: c.width,
+      height: c.height,
     });
   }
 
@@ -581,6 +595,14 @@
       }
     }
 
+    // 雲: 背景の飾りよりさらにゆっくり流れる(種によらず共通)
+    for (let i = clouds.length - 1; i >= 0; i--) {
+      clouds[i].x -= currentSpeed * CONFIG.clouds.parallax;
+      if (clouds[i].x + clouds[i].width < 0) {
+        clouds.splice(i, 1);
+      }
+    }
+
     // 障害物・エサ・背景の飾りの生成は演出中(停止中)は止める
     if (player.state === "active") {
       obstacleTimer--;
@@ -599,6 +621,12 @@
       if (decorTimer <= 0) {
         spawnDecor();
         decorTimer = randomInterval(currentSpecies().decor);
+      }
+
+      cloudTimer--;
+      if (cloudTimer <= 0) {
+        spawnCloud();
+        cloudTimer = randomInterval(CONFIG.clouds);
       }
     }
 
@@ -656,9 +684,18 @@
   function draw() {
     ctx.clearRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
-    // 背景(種ごとに色を変える)
-    ctx.fillStyle = currentSpecies().bgColor;
+    // 背景(全種共通で白。種の違いは装飾・障害物の見た目だけで表現する)
+    ctx.fillStyle = CONFIG.skyColor;
     ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+    // 雲(種によらず共通。装飾よりさらにゆっくり流れる)
+    ctx.fillStyle = CONFIG.clouds.color;
+    clouds.forEach((c) => {
+      // 3つの矩形を重ねてドット絵風の雲の形にする
+      ctx.fillRect(c.x, c.y + c.height * 0.3, c.width, c.height * 0.4);
+      ctx.fillRect(c.x + c.width * 0.15, c.y, c.width * 0.4, c.height * 0.7);
+      ctx.fillRect(c.x + c.width * 0.5, c.y + c.height * 0.1, c.width * 0.4, c.height * 0.6);
+    });
 
     // 背景の飾り(木・岩・草・ビルなど。種ごとに見た目が変わる)
     decorations.forEach((d) => {
