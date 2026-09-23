@@ -41,7 +41,7 @@ const CONFIG = {
   // (実際の速度 = difficulty.baseSpeed の世代ごとの値 × speedMultiplier。時間経過では加速しない)
   stages: [
     { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90, speedMultiplier: 0.5 },
-    { name: "CHICK", width: 16, height: 20, jumpPower: 14, color: "#333333", foodToGrow: 3, speedMultiplier: 0.7 },
+    { name: "CHICK", width: 16, height: 20, jumpPower: 12, color: "#333333", foodToGrow: 3, speedMultiplier: 0.7 },
     { name: "JUVENILE", width: 22, height: 27, jumpPower: 11, color: "#333333", foodToGrow: 4, speedMultiplier: 1.0 },
     { name: "ADULT", width: 30, height: 38, jumpPower: 8, color: "#333333", foodToGrow: 5, speedMultiplier: 1.3 },
   ],
@@ -50,13 +50,11 @@ const CONFIG = {
   // その代わりに世代が進むごとにベース速度と障害物密度を上げ、エサの出現頻度を下げていく
   difficulty: {
     // ベース速度(このあと段階ごとの speedMultiplier を掛けたものが実際のスクロール速度になる)
-    // 1周(全種×generationsPerSpecies世代)の中ではstart→maxのカーブを繰り返し、
-    // 周回(LOOP)するたびにperLoopBonusぶん底上げされ、次の周回はより速い状態から始まる
+    // 世代を追うごとに少しずつ上がり続け、種が変わっても周回(LOOP)してもリセットしない
     baseSpeed: {
-      start: 5, // 1周の中の世代1のベース速度(遅すぎるとジャンプの滞空時間に対して障害物が不自然に遅く見え、逆にタイミングが取りづらくなるため、ある程度の速さを確保する)
-      perGeneration: 0.3, // 世代が1つ進むごとに増える量
-      max: 9, // 1周の中での上限(このあとperLoopBonusが加算される)
-      perLoopBonus: 1, // 周回(LOOP)するたびに底上げされる量
+      start: 7, // 世代1のベース速度
+      perGeneration: 0.3, // 世代が1つ進むごとに増える量(gen5以降も含め、世代をまたぐたびに効く)
+      max: 30, // 上限(実質かなり遠い将来の安全装置)
     },
     // 障害物の出現間隔(フレーム数)。短いほど密度が高い
     obstacleInterval: {
@@ -80,8 +78,9 @@ const CONFIG = {
   yearsLaterPerGeneration: 1000,
 
   // 種の移り変わり(年代順)。ティラノサウルス→…→ニワトリで一周し、以降はまた最初から
-  // jumpMultiplier/sizeMultiplier/speedMultiplier は全種共通(ティラノサウルスの数値に統一)。
-  // 種ごとに変わるのは見た目の色・背景・障害物の意匠だけ
+  // jumpMultiplier/sizeMultiplier/speedMultiplier はティラノサウルスの数値に統一。
+  // 例外はニワトリのjumpMultiplierだけ(飛べない鳥なので低め)。それ以外で種ごとに
+  // 変わるのは見た目の色・背景・障害物の意匠だけ
   // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
   // decor は背景に流れる簡単な図形(木・岩・草・ビルなど)のサイズと出現間隔
   // obstacleVisuals は障害物の種類ごとの見た目の上書き(仕組みは共通、見た目だけ時代で変える)
@@ -145,7 +144,7 @@ const CONFIG = {
     {
       name: "CHICKEN",
       color: "#4a4a4a",
-      jumpMultiplier: 0.9,
+      jumpMultiplier: 0.55, // ニワトリはほとんど飛べないので、全種の中でジャンプ力だけ低くする
       sizeMultiplier: 1.05,
       speedMultiplier: 0.95,
       yearsAgoStart: 8000,
