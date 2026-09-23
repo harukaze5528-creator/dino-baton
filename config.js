@@ -7,9 +7,9 @@ const CONFIG = {
 
   // キャラクター(四角形)
   player: {
-    x: 80, // 初期位置。左右移動の中心
-    minX: 30, // 左右移動できる範囲(画面内で少し前後する程度)
-    maxX: 220,
+    x: 80, // 初期位置
+    minX: 20, // 左右移動できる範囲
+    maxX: 380, // 右端(canvasWidth)ぎりぎりまで行けると障害物の反応時間がなくなるため、少し余裕を残す
     moveSpeed: 4, // 左右キー/スワイプでの移動速度(px/フレーム)
   },
   gravity: 0.6,
@@ -157,8 +157,10 @@ const CONFIG = {
     },
   ],
 
-  // 障害物の種類。世代が進むごとに新しい種類が1つずつ解禁され(unlockGeneration)、
-  // それ以降は解禁済みの種類の中から weight(重み)に応じてランダムに選ばれて出現する
+  // 障害物の種類。generationsPerSpecies(=4世代で次の種へ)に合わせて、最初の種の中で
+  // 全種類が出そろうよう世代1→4で解禁する(unlockGeneration)。世代1:木の台のみ、
+  // 世代2:+トゲ・転がる岩、世代3:+低い枝・天井・穴、世代4:+飛ぶ敵・横から迫る敵。
+  // 解禁後は、解禁済みの種類の中から weight(重み)に応じてランダムに選ばれて出現する
   // behavior:
   //   "platform" 上に乗れる。ダメージなし(足場としてground面を一時的に持ち上げる)
   //   "jumpable" 通常の障害物。ジャンプで避ける
@@ -171,11 +173,11 @@ const CONFIG = {
   obstacleKinds: [
     { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a" },
     { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
-    { id: "boulder", behavior: "chaser", unlockGeneration: 3, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
-    { id: "lowCeiling", behavior: "overhead", unlockGeneration: 4, weight: 1, width: 44, height: 18, heightAboveGround: 14, color: "#6a4a2a" },
-    { id: "pit", behavior: "pit", unlockGeneration: 5, weight: 0.8, width: 40, color: "#000000" },
-    { id: "flyer", behavior: "overhead", unlockGeneration: 6, weight: 1, width: 20, height: 14, heightAboveGround: 22, color: "#4a4a6a" },
-    { id: "sideEnemy", behavior: "wall", unlockGeneration: 7, weight: 0.7, width: 18, height: 220, color: "#6a2a2a" },
+    { id: "boulder", behavior: "chaser", unlockGeneration: 2, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
+    { id: "lowCeiling", behavior: "overhead", unlockGeneration: 3, weight: 1, width: 44, height: 18, heightAboveGround: 14, color: "#6a4a2a" },
+    { id: "pit", behavior: "pit", unlockGeneration: 3, weight: 0.8, width: 40, color: "#000000" },
+    { id: "flyer", behavior: "overhead", unlockGeneration: 4, weight: 1, width: 20, height: 14, heightAboveGround: 22, color: "#4a4a6a" },
+    { id: "sideEnemy", behavior: "wall", unlockGeneration: 4, weight: 0.7, width: 18, height: 220, color: "#6a2a2a" },
   ],
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
