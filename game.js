@@ -11,8 +11,6 @@
   let obstacles;
   let foods;
   let parents; // 産卵後、後ろに残って画面外へ流れていく親
-  let decorations; // 背景に流れる木・岩・草・ビルなどの飾り(種ごとに見た目が変わる)
-  let decorTimer;
   let clouds; // 空を流れる雲(種によらず共通)
   let cloudTimer;
   let distanceMeters;
@@ -202,8 +200,6 @@
     obstacles = [];
     foods = [];
     parents = [];
-    decorations = [];
-    decorTimer = randomInterval(species.decor);
     clouds = [];
     cloudTimer = randomInterval(CONFIG.clouds);
     distanceMeters = 0;
@@ -356,17 +352,6 @@
       y: groundY - CONFIG.food.height - heightAboveGround,
       width: CONFIG.food.width,
       height: CONFIG.food.height,
-    });
-  }
-
-  function spawnDecor() {
-    const decor = currentSpecies().decor;
-    decorations.push({
-      x: CONFIG.canvasWidth,
-      y: groundY - decor.height,
-      width: decor.width,
-      height: decor.height,
-      color: decor.color,
     });
   }
 
@@ -587,15 +572,7 @@
       }
     }
 
-    // 背景の飾り: 前景よりゆっくり流れる(パララックス)
-    for (let i = decorations.length - 1; i >= 0; i--) {
-      decorations[i].x -= currentSpeed * CONFIG.backgroundParallax;
-      if (decorations[i].x + decorations[i].width < 0) {
-        decorations.splice(i, 1);
-      }
-    }
-
-    // 雲: 背景の飾りよりさらにゆっくり流れる(種によらず共通)
+    // 雲: 種によらず共通
     for (let i = clouds.length - 1; i >= 0; i--) {
       clouds[i].x -= currentSpeed * CONFIG.clouds.parallax;
       if (clouds[i].x + clouds[i].width < 0) {
@@ -615,12 +592,6 @@
       if (foodTimer <= 0) {
         spawnFood();
         foodTimer = randomInterval(foodIntervalRange(player.generation));
-      }
-
-      decorTimer--;
-      if (decorTimer <= 0) {
-        spawnDecor();
-        decorTimer = randomInterval(currentSpecies().decor);
       }
 
       cloudTimer--;
@@ -695,12 +666,6 @@
       ctx.fillRect(c.x, c.y + c.height * 0.3, c.width, c.height * 0.4);
       ctx.fillRect(c.x + c.width * 0.15, c.y, c.width * 0.4, c.height * 0.7);
       ctx.fillRect(c.x + c.width * 0.5, c.y + c.height * 0.1, c.width * 0.4, c.height * 0.6);
-    });
-
-    // 背景の飾り(木・岩・草・ビルなど。種ごとに見た目が変わる)
-    decorations.forEach((d) => {
-      ctx.fillStyle = d.color;
-      ctx.fillRect(d.x, d.y, d.width, d.height);
     });
 
     // 地面
