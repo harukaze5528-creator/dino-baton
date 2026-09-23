@@ -14,18 +14,24 @@ const CONFIG = {
   },
   gravity: 0.6,
 
-  // 成長段階: 卵 → ヒナ → 若い恐竜 → 大人
-  // jumpPower が大きいほど高く跳べる。foodToGrow は次の段階に育つ(大人は産卵する)までに必要なエサの数
-  // 卵だけは isEgg:true で、エサではなく hatchFrames 経過で自動的にヒナへ孵化する
+  // 成長段階: EGG → CHICK → JUVENILE → ADULT
+  // jumpPower が大きいほど高く跳べる。foodToGrow は次の段階に育つ(ADULTは産卵する)までに必要なエサの数
+  // EGGだけは isEgg:true で、エサではなく hatchFrames 経過で自動的にCHICKへ孵化する
+  // foodToGrow の合計(6+9+12=27)とエサの出現間隔(平均90フレーム=1.5秒)から、
+  // うまく拾えた場合で1世代あたり約45秒、実際のプレイでは障害物を避けつつなので1分前後になる想定
+  // (テストプレイして体感が合わなければここを調整する)
   stages: [
-    { name: "卵", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90 },
-    { name: "ヒナ", width: 20, height: 24, jumpPower: 14, color: "#333333", foodToGrow: 3 },
-    { name: "若い恐竜", width: 28, height: 34, jumpPower: 11, color: "#333333", foodToGrow: 5 },
-    { name: "大人", width: 38, height: 48, jumpPower: 8, color: "#333333", foodToGrow: 6 },
+    { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90 },
+    { name: "CHICK", width: 20, height: 24, jumpPower: 14, color: "#333333", foodToGrow: 6 },
+    { name: "JUVENILE", width: 28, height: 34, jumpPower: 11, color: "#333333", foodToGrow: 9 },
+    { name: "ADULT", width: 38, height: 48, jumpPower: 8, color: "#333333", foodToGrow: 12 },
   ],
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
   invulnFramesAfterHit: 90,
+
+  // 産卵演出: ADULTが立ち止まる時間(フレーム数)。この間は無敵・操作不能
+  layDurationFrames: 45,
 
   // 障害物
   obstacle: {
@@ -41,8 +47,8 @@ const CONFIG = {
     width: 10,
     height: 10,
     color: "#999999",
-    minInterval: 50,
-    maxInterval: 90,
+    minInterval: 70,
+    maxInterval: 110,
     heightAboveGround: [0, 70], // 地面すれすれ〜ジャンプで届く高さの範囲でランダム配置
   },
 

@@ -10,6 +10,7 @@
   let player;
   let obstacles;
   let foods;
+  let parents; // 産卵後、後ろに残って画面外へ流れていく親
   let distanceMeters;
   let currentSpeed;
   let obstacleTimer;
@@ -44,9 +45,12 @@
       invulnFrames: 0,
       generation: 1,
       generationStartDistance: 0,
+      state: "active", // "active" | "laying"(産卵演出中)
+      layTimer: 0,
     };
     obstacles = [];
     foods = [];
+    parents = [];
     distanceMeters = 0;
     currentSpeed = CONFIG.scrollSpeed;
     obstacleTimer = randomInterval(CONFIG.obstacle);
@@ -65,6 +69,7 @@
       return;
     }
     if (currentStage().isEgg) return; // 卵は操作不能(孵化を待つだけ)
+    if (player.state === "laying") return; // 産卵演出中は操作不能
     if (player.onGround) {
       player.vy = -currentStage().jumpPower;
       player.onGround = false;
@@ -113,7 +118,25 @@
     resizeToStage();
   }
 
-  function layEgg() {
+  function startLaying() {
+    // 立ち止まって産卵の演出を開始。演出中は無敵・操作不能
+    player.state = "laying";
+    player.layTimer = CONFIG.layDurationFrames;
+    player.vy = 0;
+    player.onGround = true;
+  }
+
+  function finishLaying() {
+    // 親をその場に残す(以後は障害物と同じように左へ流れて画面外へ)
+    const adultStage = currentStage();
+    parents.push({
+      x: player.x,
+      y: player.y,
+      width: player.width,
+      height: player.height,
+      color: adultStage.color,
+    });
+
     recordGeneration();
     player.generation++;
     player.generationStartDistance = distanceMeters;
@@ -121,6 +144,7 @@
     player.foodEaten = 0;
     player.hatchTimer = CONFIG.stages[0].hatchFrames;
     resizeToStage();
+    player.state = "active";
   }
 
   function advanceStage() {
@@ -137,7 +161,7 @@
 
     const isAdult = player.stageIndex === CONFIG.stages.length - 1;
     if (isAdult) {
-      layEgg();
+      startLaying();
     } else {
       advanceStage();
     }
@@ -176,13 +200,27 @@
       if (player.hatchTimer <= 0) hatch();
     }
 
-    // プレイヤーの物理演算
-    player.vy += CONFIG.gravity;
-    player.y += player.vy;
-    if (player.y + player.height >= groundY) {
-      player.y = groundY - player.height;
-      player.vy = 0;
-      player.onGround = true;
+    if (player.state === "laying") {
+      // 産卵演出中はその場に立ち止まる
+      player.layTimer--;
+      if (player.layTimer <= 0) finishLaying();
+    } else {
+      // プレイヤーの物理演算
+      player.vy += CONFIG.gravity;
+      player.y += player.vy;
+      if (player.y + player.height >= groundY) {
+        player.y = groundY - player.height;
+        player.vy = 0;
+        player.onGround = true;
+      }
+    }
+
+    // 産卵後に残された親: そのまま左へ流れて画面外へ
+    for (let i = parents.length - 1; i >= 0; i--) {
+      parents[i].x -= currentSpeed;
+      if (parents[i].x + parents[i].width < 0) {
+        parents.splice(i, 1);
+      }
     }
 
     // 障害物の生成
@@ -204,7 +242,7 @@
       const obstacle = obstacles[i];
       obstacle.x -= currentSpeed;
 
-      if (isColliding(player, obstacle)) {
+      if (player.state === "active" && isColliding(player, obstacle)) {
         takeDamage();
         if (gameOver) break;
       }
@@ -219,7 +257,7 @@
       const food = foods[i];
       food.x -= currentSpeed;
 
-      if (isColliding(player, food)) {
+      if (player.state === "active" && isColliding(player, food)) {
         foods.splice(i, 1);
         eatFood();
         continue;
@@ -236,7 +274,7 @@
   }
 
   function formatDistanceComma(meters) {
-    return Math.floor(meters).toLocaleString("ja-JP") + "m";
+    return Math.floor(meters).toLocaleString("en-US") + "m";
   }
 
   function draw() {
@@ -245,6 +283,12 @@
     // 地面
     ctx.fillStyle = "#999999";
     ctx.fillRect(0, groundY, CONFIG.canvasWidth, CONFIG.groundHeight);
+
+    // 産卵後に残された親
+    parents.forEach((p) => {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.width, p.height);
+    });
 
     // プレイヤー(無敵中は点滅)
     const blinking = player.invulnFrames > 0 && Math.floor(player.invulnFrames / 5) % 2 === 0;
@@ -265,17 +309,19 @@
     ctx.fillStyle = "#000000";
     ctx.font = "20px monospace";
     ctx.textAlign = "right";
-    ctx.fillText(`${player.generation}代目 ${formatDistance(distanceMeters)}`, CONFIG.canvasWidth - 10, 30);
+    ctx.fillText(`GEN ${player.generation} ${formatDistance(distanceMeters)}`, CONFIG.canvasWidth - 10, 30);
 
     // 成長段階の進捗表示(動作確認用)
     ctx.textAlign = "left";
     ctx.font = "16px monospace";
     const stage = currentStage();
     let progress;
-    if (stage.isEgg) {
-      progress = `${stage.name} (孵化まで ${Math.ceil(player.hatchTimer / 60)}s)`;
+    if (player.state === "laying") {
+      progress = "Laying egg...";
+    } else if (stage.isEgg) {
+      progress = `${stage.name} (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
     } else if (player.stageIndex === CONFIG.stages.length - 1) {
-      progress = `${stage.name} (産卵まで ${player.foodEaten}/${stage.foodToGrow})`;
+      progress = `${stage.name} (lay egg: ${player.foodEaten}/${stage.foodToGrow})`;
     } else {
       progress = `${stage.name} (${player.foodEaten}/${stage.foodToGrow})`;
     }
@@ -287,17 +333,17 @@
       ctx.fillText("GAME OVER", CONFIG.canvasWidth / 2, 90);
 
       ctx.font = "18px monospace";
-      ctx.fillText(`${generationLog.length}世代で ${formatDistanceComma(distanceMeters)}`, CONFIG.canvasWidth / 2, 125);
+      ctx.fillText(`${generationLog.length} GEN  ${formatDistanceComma(distanceMeters)}`, CONFIG.canvasWidth / 2, 125);
 
       ctx.font = "14px monospace";
       const maxRows = 6;
       const shown = generationLog.slice(-maxRows);
       shown.forEach((g, i) => {
-        ctx.fillText(`${g.generation}代目: ${Math.floor(g.distance)}m`, CONFIG.canvasWidth / 2, 150 + i * 18);
+        ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, CONFIG.canvasWidth / 2, 150 + i * 18);
       });
 
       ctx.font = "16px monospace";
-      ctx.fillText("タップ / クリック / スペースキーでリトライ", CONFIG.canvasWidth / 2, 150 + shown.length * 18 + 20);
+      ctx.fillText("TAP / CLICK / SPACE TO RETRY", CONFIG.canvasWidth / 2, 150 + shown.length * 18 + 20);
     }
   }
 
