@@ -67,10 +67,25 @@
   const speciesSprites = loadSpeciesSpriteMap("sprite");
   const speciesChickSprites = loadSpeciesSpriteMap("chickSprite");
 
+  // 種専用の走りアニメーション(CONFIG.species[].runSprite。[フレーム1, フレーム2]の2枚)。
+  // 指定がない種はnullのままになる
+  const speciesRunSprites = {};
+  CONFIG.species.forEach((species) => {
+    if (!species.runSprite) return;
+    const frames = species.runSprite.map(() => null);
+    speciesRunSprites[species.name] = frames;
+    species.runSprite.forEach((src, i) => {
+      const img = new Image();
+      img.onload = () => { frames[i] = img; };
+      img.onerror = () => { frames[i] = null; };
+      img.src = src;
+    });
+  });
+
   // 段階と種から描画に使うスプライトを決める。卵は種によらず常に共通の絵。ヒナは種専用の
-  // 絵があればそれを使う。若い恐竜・大人は種専用の絵があればそれを使い(静止画のまま。
-  // CONFIG.stagesの小さいwidth/heightでそのまま描画されるので若い恐竜は縮小表示になる)、
-  // なければ共通の走りアニメーション(runFrameIndexで指定した側の絵)を使う
+  // 絵があればそれを使う。若い恐竜・大人は種専用の走りアニメーション(2枚)があればそれを、
+  // なければ種専用の静止画、それもなければ汎用の走りアニメーションを使う
+  // (CONFIG.stagesの小さいwidth/heightでそのまま描画されるので若い恐竜は縮小表示になる)
   function spriteFor(stageIndex, species, runFrameIndex) {
     if (stageIndex === 1) {
       const chickSprite = speciesChickSprites[species.name];
@@ -78,6 +93,8 @@
       return playerSprites[1];
     }
     if (stageIndex >= 2) {
+      const speciesRunPair = speciesRunSprites[species.name];
+      if (speciesRunPair) return speciesRunPair[runFrameIndex] || speciesRunPair[0] || speciesSprites[species.name];
       const speciesSprite = speciesSprites[species.name];
       if (speciesSprite) return speciesSprite;
       return runFrames[runFrameIndex] || runFrames[0];

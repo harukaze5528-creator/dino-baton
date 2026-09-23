@@ -103,9 +103,11 @@ const CONFIG = {
   // 変わるのは見た目の色・障害物の意匠だけ(空の色は全種共通。CONFIG.skyColorを参照)
   // yearsAgoStart/yearsAgoEnd はその種の間に「n YEARS AGO」表示が動く範囲(世代が進むにつれて線形に減っていく)
   // obstacleVisuals は障害物の種類ごとの見た目の上書き(仕組みは共通、見た目だけ時代で変える)
-  // sprite: 若い恐竜・大人の見た目に使う種専用のドット絵(assets/配下)。指定がない種は
-  // 汎用のjuvenile.png/adult.png(ティラノサウルスの絵)を使う。若い恐竜の段階はこの
-  // 同じ画像を小さいサイズで描画する(専用の縮小版画像は用意しない)
+  // sprite: 若い恐竜・大人の見た目に使う種専用の静止画(assets/配下)。指定がない種は
+  // 汎用の走りアニメーション(run1.png/run2.png)を使う。若い恐竜の段階はこの同じ画像を
+  // 小さいサイズで描画する(専用の縮小版画像は用意しない)
+  // runSprite: spriteの代わりに、種専用の走りアニメーション2枚を指定する場合に使う
+  // ([フレーム1, フレーム2]。両方指定した場合はrunSpriteが優先される)
   // chickSprite: ヒナの見た目に使う種専用のドット絵。指定がない種は汎用のchick.pngを使う
   // (卵は種によらず常にegg.pngを使う)
   species: [
@@ -130,6 +132,7 @@ const CONFIG = {
       yearsAgoStart: 66000000,
       yearsAgoEnd: 60000000,
       sprite: "assets/asteriornis.png",
+      runSprite: ["assets/asteriornis-run1.png", "assets/asteriornis-run2.png"],
       obstacleVisuals: {
         spike: { color: "#7a6a52", width: 16, height: 22 }, // 枯れた棘の茂み
       },
