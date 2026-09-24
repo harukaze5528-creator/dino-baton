@@ -4,8 +4,12 @@ const CONFIG = {
   canvasHeight: 300,
   groundHeight: 40,
   skyColor: "#f7f7f7", // 空(背景)の色。種によらず全種共通(原作のChrome恐竜ゲームと同じ白系)
-  groundColor: "#999999", // 地面の下地の色(groundSpriteが読み込めない場合のフォールバックにも使う)
+  groundColor: "#f7f7f7", // 地面の下地の色。空と同じ白にして、地面模様(線)だけが見えるようにする
   groundSprite: "assets/ground.png", // 地面に重ねて描く模様(線とドット)。スクロールに合わせて流れる
+  // groundSprite画像の中で「地面の線(直線部分)」が上端から何%の位置にあるか(0〜1)。
+  // プレイヤー・障害物が実際に乗る高さ(groundY)はこの線の位置に揃え、線から上に飛び出す
+  // でこぼこ(草や小石の盛り上がり)は当たり判定に関係ない飾りとして扱う
+  groundLineRatio: 0.25,
 
   // 空を流れる雲。種によらず共通
   clouds: {

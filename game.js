@@ -787,9 +787,12 @@
     if (groundImg) {
       const tileHeight = CONFIG.groundHeight;
       const tileWidth = groundImg.naturalWidth * (tileHeight / groundImg.naturalHeight);
+      // 画像内の「地面の線」がgroundY(実際にキャラ・障害物が乗る高さ)に来るよう、
+      // 線より上のでこぼこ部分だけ上にはみ出させて描く
+      const lineY = groundY - tileHeight * CONFIG.groundLineRatio;
       const offset = groundScrollX % tileWidth;
       for (let x = -offset; x < CONFIG.canvasWidth; x += tileWidth) {
-        ctx.drawImage(groundImg, x, groundY, tileWidth, tileHeight);
+        ctx.drawImage(groundImg, x, lineY, tileWidth, tileHeight);
       }
     }
 
