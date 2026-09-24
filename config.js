@@ -176,7 +176,7 @@ const CONFIG = {
       yearsAgoStart: 8000,
       yearsAgoEnd: 0,
       sprite: "assets/chicken.png",
-      // runSprite: ["assets/chicken-run1.png", "assets/chicken-run2.png"], // chicken-run1.pngの中身が2匹分入ってしまっているため一時的に無効化(直ったら復活させる)
+      runSprite: ["assets/chicken-run1.png", "assets/chicken-run2.png"],
       chickSprite: "assets/chicken-chick.png",
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       obstacleVisuals: {
