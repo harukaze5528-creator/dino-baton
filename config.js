@@ -146,6 +146,7 @@ const CONFIG = {
       yearsAgoStart: 56000000,
       yearsAgoEnd: 40000000,
       sprite: "assets/gastornis.png",
+      runSprite: ["assets/gastornis-run1.png", "assets/gastornis-run2.png"],
       obstacleVisuals: {
         spike: { color: "#3a5a2a", width: 14, height: 28 }, // トゲの茂み
       },
@@ -159,6 +160,7 @@ const CONFIG = {
       yearsAgoStart: 25000000,
       yearsAgoEnd: 2000000,
       sprite: "assets/phorusrhacos.png",
+      runSprite: ["assets/phorusrhacos-run1.png", "assets/phorusrhacos-run2.png"],
       obstacleVisuals: {
         spike: { color: "#a68a4a", width: 16, height: 20 }, // 乾いた棘の茂み
       },
