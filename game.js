@@ -46,8 +46,8 @@
   // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
   const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
 
-  // 隕石イベントで降ってくる隕石のドット絵
-  const meteorSpriteEntry = getOrLoadImage(CONFIG.meteorEvent.sprite);
+  // 隕石イベントで降ってくる隕石のドット絵(2枚を交互に切り替えて炎が揺れて見えるようにする)
+  const meteorSpriteFrames = CONFIG.meteorEvent.spriteFrames.map(getOrLoadImage);
 
   // プレイヤーのドット絵スプライト(卵・ヒナ。種専用の絵がない場合の共通フォールバック)。
   // assets/配下のPNGはあらかじめ背景を透過処理済み(制作ツール側の白いベタ塗り背景を
@@ -903,7 +903,11 @@
         const endY = groundY;
         const meteorX = startX + (endX - startX) * t;
         const meteorY = startY + (endY - startY) * t;
-        const meteorImg = meteorSpriteEntry.img;
+        // player.state が "laying" の間は runAnimFrameCounter が進まないため、
+        // 代わりに経過フレーム数(elapsed)から独自に炎の点滅フレームを決める
+        const meteorFrameIndex = Math.floor(elapsed / CONFIG.runAnimation.framesPerPose) % 2;
+        const meteorFrame = meteorSpriteFrames[meteorFrameIndex] || meteorSpriteFrames[0];
+        const meteorImg = meteorFrame && meteorFrame.img;
         if (meteorImg) {
           ctx.drawImage(meteorImg, meteorX, meteorY, m.width, m.height);
         } else {
