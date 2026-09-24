@@ -185,6 +185,7 @@ const CONFIG = {
       runSprite: ["assets/chicken-run1.png", "assets/chicken-run2.png"],
       chickSprite: "assets/chicken-chick.png",
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
+      foodSprite: "assets/berry.png", // 木の実(ニワトリ世代だけ見た目を変える)
       obstacleVisuals: {
         spike: { color: "#4a4a4a", width: 20, height: 20, sprite: "assets/building.png" }, // ビル
         // pit(地面の障害物)は針の代わりに車、flyer(頭上の障害物・群れ)はプテラの代わりに
@@ -294,7 +295,7 @@ const CONFIG = {
     width: 14,
     height: 14,
     color: "#999999",
-    sprite: "assets/berry.png", // 木の実
+    sprite: "assets/fruit.png", // 木の実(恐竜・鳥の世代の見た目。種ごとにfoodSpriteで上書きできる)
     heightAboveGround: [0, 70], // 地面すれすれ〜ジャンプで届く高さの範囲でランダム配置
   },
 

@@ -96,6 +96,7 @@
   }
   const speciesSprites = loadSpeciesSpriteMap("sprite");
   const speciesChickSprites = loadSpeciesSpriteMap("chickSprite");
+  const speciesFoodSprites = loadSpeciesSpriteMap("foodSprite");
 
   // 種専用の走りアニメーション([フレーム1, フレーム2]の2枚)。指定がない種はnullのままになる
   function loadSpeciesRunSpriteMap(fieldName) {
@@ -850,8 +851,9 @@
       }
     });
 
-    // エサ(木の実。ドット絵があればそれを描画し、なければ今まで通り矩形で描画する)
-    const foodImg = foodSpriteEntry && foodSpriteEntry.img;
+    // エサ(木の実。種専用の絵があればそれを、なければ汎用の絵を描画し、それも無理なら矩形で描画する)
+    const speciesFoodSprite = speciesFoodSprites[currentSpecies().name];
+    const foodImg = speciesFoodSprite || (foodSpriteEntry && foodSpriteEntry.img);
     foods.forEach((f) => {
       if (foodImg) {
         ctx.drawImage(foodImg, f.x, f.y, f.width, f.height);
