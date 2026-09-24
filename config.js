@@ -187,6 +187,11 @@ const CONFIG = {
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       obstacleVisuals: {
         spike: { color: "#4a4a4a", width: 20, height: 20, sprite: "assets/building.png" }, // ビル
+        // pit(地面の障害物)は針の代わりに車、flyer(頭上の障害物・群れ)はプテラの代わりに
+        // 飛行機にする。flyerはspriteFrames(2枚アニメーション)ではなく静止画1枚なので、
+        // 汎用側のspriteFramesを打ち消すためnullを明示している
+        pit: { color: "#4a4a4a", width: 28, height: 13, sprite: "assets/car.png" }, // 車
+        flyer: { color: "#4a4a4a", width: 26, height: 11, sprite: "assets/airplane.png", spriteFrames: null }, // 飛行機
       },
     },
   ],
