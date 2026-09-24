@@ -128,7 +128,7 @@ const CONFIG = {
       yearsAgoStart: 68000000,
       yearsAgoEnd: 66000000,
       obstacleVisuals: {
-        spike: { color: "#4a6a2a", width: 14, height: 28 }, // トゲのある植物
+        spike: { color: "#4a6a2a", width: 14, height: 28, sprite: "assets/cactus.png" }, // トゲのある植物→サボテンの絵を流用
       },
     },
     {
@@ -142,7 +142,7 @@ const CONFIG = {
       sprite: "assets/asteriornis.png",
       runSprite: ["assets/asteriornis-run1.png", "assets/asteriornis-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#7a6a52", width: 16, height: 22 }, // 枯れた棘の茂み
+        spike: { color: "#7a6a52", width: 16, height: 22, sprite: "assets/cactus.png" }, // 枯れた棘の茂み→サボテンの絵を流用
       },
     },
     {
@@ -156,7 +156,7 @@ const CONFIG = {
       sprite: "assets/gastornis.png",
       runSprite: ["assets/gastornis-run1.png", "assets/gastornis-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#3a5a2a", width: 14, height: 28 }, // トゲの茂み
+        spike: { color: "#3a5a2a", width: 14, height: 28, sprite: "assets/cactus.png" }, // トゲの茂み→サボテンの絵を流用
       },
     },
     {
@@ -170,7 +170,7 @@ const CONFIG = {
       sprite: "assets/phorusrhacos.png",
       runSprite: ["assets/phorusrhacos-run1.png", "assets/phorusrhacos-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#a68a4a", width: 16, height: 20 }, // 乾いた棘の茂み
+        spike: { color: "#a68a4a", width: 16, height: 20, sprite: "assets/cactus.png" }, // 乾いた棘の茂み→サボテンの絵を流用
       },
     },
     {
@@ -186,7 +186,7 @@ const CONFIG = {
       chickSprite: "assets/chicken-chick.png",
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#4a8a4a", width: 20, height: 20, sprite: "assets/cactus.png" }, // サボテン
+        spike: { color: "#4a4a4a", width: 20, height: 20, sprite: "assets/building.png" }, // ビル
       },
     },
   ],
