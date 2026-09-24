@@ -22,6 +22,23 @@
   let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
   let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
 
+  // 障害物用のドット絵を読み込んで使い回すキャッシュ(パス文字列 → { img })。
+  // imgはロード完了までnullなので、参照した時点でまだ読み込み中でも壊れない
+  const imageCache = {};
+  function getOrLoadImage(src) {
+    if (!src) return null;
+    let entry = imageCache[src];
+    if (!entry) {
+      entry = { img: null };
+      const image = new Image();
+      image.onload = () => { entry.img = image; };
+      image.onerror = () => { entry.img = null; };
+      image.src = src;
+      imageCache[src] = entry;
+    }
+    return entry;
+  }
+
   // プレイヤーのドット絵スプライト(卵・ヒナ。種専用の絵がない場合の共通フォールバック)。
   // assets/配下のPNGはあらかじめ背景を透過処理済み(制作ツール側の白いベタ塗り背景を
   // 透明化してある)。ここではgetImageDataなどのピクセル読み取りは一切行わない。
@@ -406,6 +423,8 @@
       width,
       height,
       color: visual.color,
+      sprite: visual.sprite ? getOrLoadImage(visual.sprite) : null,
+      spriteFrames: visual.spriteFrames ? visual.spriteFrames.map(getOrLoadImage) : null,
       approachSpeedMultiplier: kind.approachSpeedMultiplier || 1,
     });
   }
@@ -415,6 +434,8 @@
     const segmentKind = CONFIG.obstacleKinds.find((k) => k.id === kind.segmentKind);
     const visual = obstacleVisual(segmentKind);
     const birdHeight = visual.height;
+    const sprite = visual.sprite ? getOrLoadImage(visual.sprite) : null;
+    const spriteFrames = visual.spriteFrames ? visual.spriteFrames.map(getOrLoadImage) : null;
 
     // 一番下(地面際)は gapHeight 分だけ必ず開けておく。しゃがめばどの種・成長段階でも通り抜けられる
     const spanTop = kind.topMargin;
@@ -422,7 +443,7 @@
     const x = CONFIG.canvasWidth;
 
     for (let y = spanTop; y + birdHeight <= gapTop; y += birdHeight) {
-      obstacles.push({ kind: kind.id, behavior: "overhead", x, y, width: visual.width, height: birdHeight, color: visual.color });
+      obstacles.push({ kind: kind.id, behavior: "overhead", x, y, width: visual.width, height: birdHeight, color: visual.color, sprite, spriteFrames });
     }
   }
 
@@ -781,10 +802,21 @@
       drawCharacter(spriteFor(player.stageIndex, currentSpecies(), currentRunFrameIndex()), box.x, box.y, box.width, box.height, currentColor(), isFlashing ? fx.flashColor : null);
     }
 
-    // 障害物
+    // 障害物(ドット絵があればそれを描画し、なければ今まで通り矩形で描画する)
     obstacles.forEach((o) => {
-      ctx.fillStyle = o.color;
-      ctx.fillRect(o.x, o.y, o.width, o.height);
+      let sprite = null;
+      if (o.spriteFrames) {
+        const frame = o.spriteFrames[currentRunFrameIndex()] || o.spriteFrames[0];
+        sprite = frame && frame.img;
+      } else if (o.sprite) {
+        sprite = o.sprite.img;
+      }
+      if (sprite) {
+        ctx.drawImage(sprite, o.x, o.y, o.width, o.height);
+      } else {
+        ctx.fillStyle = o.color;
+        ctx.fillRect(o.x, o.y, o.width, o.height);
+      }
     });
 
     // エサ

@@ -180,7 +180,7 @@ const CONFIG = {
       chickSprite: "assets/chicken-chick.png",
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#4a8a4a", width: 20, height: 20 }, // サボテン
+        spike: { color: "#4a8a4a", width: 20, height: 20, sprite: "assets/cactus.png" }, // サボテン
       },
     },
   ],
@@ -199,11 +199,23 @@ const CONFIG = {
   //              gapHeightの高さだけ必ず開けておく。しゃがめばどの種・成長段階でも通り抜けられる
   // 見た目(width/height/color)は種ごとの obstacleVisuals で上書きできる。追加の順番・出現頻度・
   // 組み合わせ方はこの配列とdifficulty.obstacleIntervalで調整する
+  // sprite/spriteFramesを指定すると、colorの塗りつぶし矩形の代わりにドット絵を描画する
+  // (spriteFramesは[フレーム1, フレーム2]で、走りアニメーションと同じ周期で交互に切り替わる)
   obstacleKinds: [
     { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a" },
     { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
     { id: "boulder", behavior: "chaser", unlockGeneration: 3, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
-    { id: "flyer", behavior: "overhead", unlockGeneration: 4, weight: 1.2, width: 20, height: 14, heightAboveGround: 18, color: "#4a4a6a" },
+    {
+      id: "flyer",
+      behavior: "overhead",
+      unlockGeneration: 4,
+      weight: 1.2,
+      width: 20,
+      height: 14,
+      heightAboveGround: 18,
+      color: "#4a4a6a",
+      spriteFrames: ["assets/ptera1.png", "assets/ptera2.png"], // 羽ばたきで交互に切り替える
+    },
     { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 40, height: 12, color: "#6a1a1a" },
     // segmentKind: 群れを構成する1羽あたりの見た目をどのkindから借りるか(flyerと共通にする)
     { id: "flock", behavior: "flock", unlockGeneration: 5, weight: 0.7, segmentKind: "flyer", gapHeight: 28, topMargin: 30 },
