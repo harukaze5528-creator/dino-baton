@@ -70,6 +70,22 @@
     instance.play().catch(() => {});
   }
 
+  // BGM: タイトル・一時停止中・結果画面では止め、実際にプレイ中だけループ再生する
+  const bgm = new Audio(CONFIG.bgm.src);
+  bgm.loop = true;
+  bgm.volume = CONFIG.bgm.volume;
+  let bgmPlaying = false;
+  function syncBgm() {
+    const shouldPlay = screen === "playing" && !paused && !gameOver;
+    if (shouldPlay === bgmPlaying) return;
+    bgmPlaying = shouldPlay;
+    if (shouldPlay) {
+      bgm.play().catch(() => {});
+    } else {
+      bgm.pause();
+    }
+  }
+
   // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
   const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
 
@@ -1060,6 +1076,7 @@
     if (screen === "playing" && !paused) update();
     draw();
     syncPauseButton();
+    syncBgm();
     requestAnimationFrame(loop);
   }
 

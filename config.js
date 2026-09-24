@@ -27,6 +27,12 @@ const CONFIG = {
     boulder: "assets/boulder.mp3", // 後ろから転がってくる岩が出現した瞬間
   },
 
+  // BGM: プレイ中(タイトル・一時停止・結果画面を除く)だけループ再生する
+  bgm: {
+    src: "assets/bgm.mp3",
+    volume: 0.3, // 効果音より控えめにする
+  },
+
   // 空を流れる雲。種によらず共通
   clouds: {
     color: "#dcdcdc",
