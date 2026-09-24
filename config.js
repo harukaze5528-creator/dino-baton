@@ -64,10 +64,10 @@ const CONFIG = {
   // speedMultiplier はスクロール速度の段階別の倍率。ヒナが最も遅く、大人が最も速い
   // (実際の速度 = difficulty.baseSpeed の世代ごとの値 × speedMultiplier。時間経過では加速しない)
   stages: [
-    { name: "EGG", isEgg: true, width: 14, height: 14, color: "#cccccc", hatchFrames: 90, speedMultiplier: 0.5 },
-    { name: "CHICK", width: 16, height: 20, jumpPower: 10, color: "#333333", foodToGrow: 3, speedMultiplier: 0.8 },
-    { name: "JUVENILE", width: 22, height: 27, jumpPower: 9, color: "#333333", foodToGrow: 4, speedMultiplier: 1.1 },
-    { name: "ADULT", width: 30, height: 38, jumpPower: 8, color: "#333333", foodToGrow: 5, speedMultiplier: 1.3 },
+    { name: "EGG", isEgg: true, width: 18, height: 18, color: "#cccccc", hatchFrames: 90, speedMultiplier: 0.5 },
+    { name: "CHICK", width: 21, height: 26, jumpPower: 10, color: "#333333", foodToGrow: 3, speedMultiplier: 0.8 },
+    { name: "JUVENILE", width: 29, height: 35, jumpPower: 9, color: "#333333", foodToGrow: 4, speedMultiplier: 1.1 },
+    { name: "ADULT", width: 39, height: 49, jumpPower: 8, color: "#333333", foodToGrow: 5, speedMultiplier: 1.3 },
   ],
 
   // 世代ごとの難易度カーブ。成長に必要なエサ数(stages[].foodToGrow)は全世代で統一し、
@@ -128,7 +128,7 @@ const CONFIG = {
       yearsAgoStart: 68000000,
       yearsAgoEnd: 66000000,
       obstacleVisuals: {
-        spike: { color: "#4a6a2a", width: 14, height: 28, sprite: "assets/cactus.png" }, // トゲのある植物→サボテンの絵を流用
+        spike: { color: "#4a6a2a", width: 18, height: 36, sprite: "assets/cactus.png" }, // トゲのある植物→サボテンの絵を流用
       },
     },
     {
@@ -142,7 +142,7 @@ const CONFIG = {
       sprite: "assets/asteriornis.png",
       runSprite: ["assets/asteriornis-run1.png", "assets/asteriornis-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#7a6a52", width: 16, height: 22, sprite: "assets/cactus.png" }, // 枯れた棘の茂み→サボテンの絵を流用
+        spike: { color: "#7a6a52", width: 21, height: 29, sprite: "assets/cactus.png" }, // 枯れた棘の茂み→サボテンの絵を流用
       },
     },
     {
@@ -156,7 +156,7 @@ const CONFIG = {
       sprite: "assets/gastornis.png",
       runSprite: ["assets/gastornis-run1.png", "assets/gastornis-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#3a5a2a", width: 14, height: 28, sprite: "assets/cactus.png" }, // トゲの茂み→サボテンの絵を流用
+        spike: { color: "#3a5a2a", width: 18, height: 36, sprite: "assets/cactus.png" }, // トゲの茂み→サボテンの絵を流用
       },
     },
     {
@@ -170,7 +170,7 @@ const CONFIG = {
       sprite: "assets/phorusrhacos.png",
       runSprite: ["assets/phorusrhacos-run1.png", "assets/phorusrhacos-run2.png"],
       obstacleVisuals: {
-        spike: { color: "#a68a4a", width: 16, height: 20, sprite: "assets/cactus.png" }, // 乾いた棘の茂み→サボテンの絵を流用
+        spike: { color: "#a68a4a", width: 21, height: 26, sprite: "assets/cactus.png" }, // 乾いた棘の茂み→サボテンの絵を流用
       },
     },
     {
@@ -187,12 +187,12 @@ const CONFIG = {
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       foodSprite: "assets/berry.png", // 木の実(ニワトリ世代だけ見た目を変える)
       obstacleVisuals: {
-        spike: { color: "#4a4a4a", width: 20, height: 20, sprite: "assets/building.png" }, // ビル
+        spike: { color: "#4a4a4a", width: 26, height: 26, sprite: "assets/building.png" }, // ビル
         // pit(地面の障害物)は針の代わりに車、flyer(頭上の障害物・群れ)はプテラの代わりに
         // 飛行機にする。flyerはspriteFrames(2枚アニメーション)ではなく静止画1枚なので、
         // 汎用側のspriteFramesを打ち消すためnullを明示している
-        pit: { color: "#4a4a4a", width: 28, height: 13, sprite: "assets/car.png" }, // 車
-        flyer: { color: "#4a4a4a", width: 26, height: 11, sprite: "assets/airplane.png", spriteFrames: null }, // 飛行機
+        pit: { color: "#4a4a4a", width: 36, height: 17, sprite: "assets/car.png" }, // 車
+        flyer: { color: "#4a4a4a", width: 34, height: 14, sprite: "assets/airplane.png", spriteFrames: null }, // 飛行機
       },
     },
   ],
@@ -214,15 +214,15 @@ const CONFIG = {
   // sprite/spriteFramesを指定すると、colorの塗りつぶし矩形の代わりにドット絵を描画する
   // (spriteFramesは[フレーム1, フレーム2]で、走りアニメーションと同じ周期で交互に切り替わる)
   obstacleKinds: [
-    { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a", sprite: "assets/platform.png" },
-    { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
+    { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 34, height: 18, color: "#8a6a3a", sprite: "assets/platform.png" },
+    { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 21, height: 31, color: "#555555" },
     {
       id: "boulder",
       behavior: "chaser",
       unlockGeneration: 3,
       weight: 0.8,
-      width: 22,
-      height: 22,
+      width: 29,
+      height: 29,
       color: "#6a6a6a",
       approachSpeedMultiplier: 1.5,
       spriteFrames: ["assets/boulder1.png", "assets/boulder2.png"], // 転がって見えるよう交互に切り替える
@@ -232,15 +232,15 @@ const CONFIG = {
       behavior: "overhead",
       unlockGeneration: 4,
       weight: 1.2,
-      width: 20,
-      height: 14,
-      heightAboveGround: 18,
+      width: 26,
+      height: 18,
+      heightAboveGround: 23,
       color: "#4a4a6a",
       spriteFrames: ["assets/ptera1.png", "assets/ptera2.png"], // 羽ばたきで交互に切り替える
     },
-    { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 40, height: 12, color: "#6a1a1a", sprite: "assets/needle.png" },
+    { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 52, height: 16, color: "#6a1a1a", sprite: "assets/needle.png" },
     // segmentKind: 群れを構成する1羽あたりの見た目をどのkindから借りるか(flyerと共通にする)
-    { id: "flock", behavior: "flock", unlockGeneration: 5, weight: 0.7, segmentKind: "flyer", gapHeight: 28, topMargin: 30 },
+    { id: "flock", behavior: "flock", unlockGeneration: 5, weight: 0.7, segmentKind: "flyer", gapHeight: 36, topMargin: 39 },
   ],
 
   // 障害物に当たってから次の当たり判定が発生するまでの無敵フレーム数(若返り直後の連続ヒットを防ぐ)
@@ -292,8 +292,8 @@ const CONFIG = {
 
   // エサ
   food: {
-    width: 14,
-    height: 14,
+    width: 18,
+    height: 18,
     color: "#999999",
     sprite: "assets/fruit.png", // 木の実(恐竜・鳥の世代の見た目。種ごとにfoodSpriteで上書きできる)
     heightAboveGround: [0, 70], // 地面すれすれ〜ジャンプで届く高さの範囲でランダム配置
