@@ -195,7 +195,7 @@ const CONFIG = {
     {
       name: "CHICKEN",
       color: "#4a4a4a",
-      jumpMultiplier: 0.55, // ニワトリはほとんど飛べないので、全種の中でジャンプ力だけ低くする
+      jumpMultiplier: 0.65, // ニワトリはほとんど飛べないので、全種の中でジャンプ力だけ低くする
       sizeMultiplier: 1.05,
       speedMultiplier: 0.95,
       yearsAgoStart: 8000,
