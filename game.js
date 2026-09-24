@@ -73,9 +73,6 @@
   // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
   const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
 
-  // 隕石イベントで降ってくる隕石のドット絵(2枚を交互に切り替えて炎が揺れて見えるようにする)
-  const meteorSpriteFrames = CONFIG.meteorEvent.spriteFrames.map(getOrLoadImage);
-
   // エサ(木の実)のドット絵
   const foodSpriteEntry = getOrLoadImage(CONFIG.food.sprite);
 
@@ -319,14 +316,12 @@
       invulnFrames: 0,
       generation: 1,
       generationStartDistance: 0,
-      state: "active", // "active" | "laying"(産卵演出中: 減速→停止→[隕石]→加速の段階)
-      layPhase: null, // "decel" | "hold" | "meteor" | "accel"
+      state: "active", // "active" | "laying"(産卵演出中: 減速→停止→加速の段階)
+      layPhase: null, // "decel" | "hold" | "accel"
       layPhaseTimer: 0,
       layStartSpeed: 0,
       layTargetSpeed: 0,
       layResult: null, // 停止中に画面中央へ表示する { generation, distance }
-      isMeteor: false, // このholdの後に隕石イベントを挟むか
-      meteorKind: null, // "dinosaurExtinction"なら1回目(恐竜時代の終わり)の隕石。見た目の上書きに使う
       input: { up: false, down: false, left: false, right: false }, // キーボード/マウスの押しっぱなし状態
       jumping: false,
       jumpHoldFrames: 0,
@@ -559,7 +554,6 @@
   function startLaying() {
     // 産卵演出を開始: 親をその場に残し、プレイヤーは卵に切り替わる(孵化はholdフェーズの終わりで起きる)
     playSound("lay");
-    const oldSpeciesIndex = speciesIndexForGeneration(player.generation);
 
     const newParent = {
       x: player.x,
@@ -583,15 +577,6 @@
     resizeToStage();
     player.vy = 0;
     player.onGround = true;
-
-    // 隕石イベントは2箇所: ティラノサウルス(種0)の最後の世代の終わり(恐竜時代の終わり)、
-    // フォルスラコス(最後から2番目の種)の最後の世代の終わり(→現代のニワトリへ)
-    const newSpeciesIndex = speciesIndexForGeneration(player.generation);
-    const lastIndex = CONFIG.species.length - 1;
-    const isDinosaurExtinction = oldSpeciesIndex === 0 && newSpeciesIndex === 1;
-    const isModernMeteor = oldSpeciesIndex === lastIndex - 1 && newSpeciesIndex === lastIndex;
-    player.isMeteor = isDinosaurExtinction || isModernMeteor;
-    player.meteorKind = isDinosaurExtinction ? "dinosaurExtinction" : null;
 
     player.state = "laying";
     player.layPhase = "decel";
@@ -626,18 +611,6 @@
         player.layPhaseTimer = anim.holdFrames;
       }
     } else if (player.layPhase === "hold") {
-      currentSpeed = 0;
-      if (player.layPhaseTimer <= 0) {
-        if (player.isMeteor) {
-          const m = CONFIG.meteorEvent;
-          player.layPhase = "meteor";
-          player.layPhaseTimer = m.fallFrames + m.flashFrames;
-          playSound("meteor");
-        } else {
-          finishHold();
-        }
-      }
-    } else if (player.layPhase === "meteor") {
       currentSpeed = 0;
       if (player.layPhaseTimer <= 0) {
         finishHold();
@@ -930,8 +903,7 @@
     const speciesName = currentSpecies().name;
     let progress = "";
     if (player.state === "laying") {
-      if (player.layPhase === "meteor") progress = "METEOR IMPACT...";
-      else if (player.layPhase !== "hold") progress = "Laying egg...";
+      if (player.layPhase !== "hold") progress = "Laying egg...";
     } else if (stage.isEgg) {
       progress = `${speciesName} EGG (hatch in ${Math.ceil(player.hatchTimer / 60)}s)`;
     } else if (player.stageIndex === CONFIG.stages.length - 1) {
@@ -955,39 +927,6 @@
         CONFIG.canvasWidth / 2,
         CONFIG.canvasHeight / 2
       );
-    }
-
-    // 隕石イベント: 右上から隕石が落ちてきて、着弾すると画面が閃光に包まれる
-    if (player.state === "laying" && player.layPhase === "meteor") {
-      const m = CONFIG.meteorEvent;
-      const sizeOverride = player.meteorKind && m[player.meteorKind];
-      const meteorWidth = (sizeOverride && sizeOverride.width) || m.width;
-      const meteorHeight = (sizeOverride && sizeOverride.height) || m.height;
-      const elapsed = m.fallFrames + m.flashFrames - player.layPhaseTimer;
-      if (elapsed < m.fallFrames) {
-        const t = elapsed / m.fallFrames;
-        const startX = CONFIG.canvasWidth - meteorWidth;
-        const startY = 0;
-        // 隕石の中心(左上基準ではなく実際の見た目の中心)が画面中央・地面の高さに来るようにする
-        const endX = CONFIG.canvasWidth / 2 - meteorWidth / 2;
-        const endY = groundY - meteorHeight;
-        const meteorX = startX + (endX - startX) * t;
-        const meteorY = startY + (endY - startY) * t;
-        // player.state が "laying" の間は runAnimFrameCounter が進まないため、
-        // 代わりに経過フレーム数(elapsed)から独自に炎の点滅フレームを決める
-        const meteorFrameIndex = Math.floor(elapsed / CONFIG.runAnimation.framesPerPose) % 2;
-        const meteorFrame = meteorSpriteFrames[meteorFrameIndex] || meteorSpriteFrames[0];
-        const meteorImg = meteorFrame && meteorFrame.img;
-        if (meteorImg) {
-          ctx.drawImage(meteorImg, meteorX, meteorY, meteorWidth, meteorHeight);
-        } else {
-          ctx.fillStyle = m.color;
-          ctx.fillRect(meteorX, meteorY, meteorWidth, meteorHeight);
-        }
-      } else {
-        ctx.fillStyle = m.flashColor;
-        ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
-      }
     }
 
     if (gameOver) {
