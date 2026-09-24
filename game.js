@@ -70,18 +70,17 @@
     instance.play().catch(() => {});
   }
 
-  // BGM: タイトル・一時停止中・結果画面では止め、実際にプレイ中だけループ再生する
+  // BGM: タイトル画面も含めてループ再生し、一時停止中・結果画面だけ止める。
+  // ブラウザの自動再生制限でタイトル表示直後の再生に失敗しても、shouldPlayがtrueの間は
+  // 毎フレームbgm.pausedを見て再試行するので、最初のユーザー操作の直後に自然に鳴り出す
   const bgm = new Audio(CONFIG.bgm.src);
   bgm.loop = true;
   bgm.volume = CONFIG.bgm.volume;
-  let bgmPlaying = false;
   function syncBgm() {
-    const shouldPlay = screen === "playing" && !paused && !gameOver;
-    if (shouldPlay === bgmPlaying) return;
-    bgmPlaying = shouldPlay;
-    if (shouldPlay) {
+    const shouldPlay = !paused && !gameOver;
+    if (shouldPlay && bgm.paused) {
       bgm.play().catch(() => {});
-    } else {
+    } else if (!shouldPlay && !bgm.paused) {
       bgm.pause();
     }
   }
