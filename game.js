@@ -909,17 +909,17 @@
 
     // 世代・距離表示
     ctx.fillStyle = "#000000";
-    ctx.font = "20px monospace";
+    ctx.font = "20px 'NegaTape', monospace";
     ctx.textAlign = "right";
     ctx.fillText(`GEN ${player.generation} ${formatDistance(distanceMeters)}`, CONFIG.canvasWidth - 10, 30);
 
     // 周回数(先祖返りするたびに増える)
-    ctx.font = "12px monospace";
+    ctx.font = "12px 'NegaTape', monospace";
     ctx.fillText(`LOOP ${loopForGeneration(player.generation)}`, CONFIG.canvasWidth - 10, 44);
 
     // 成長段階の進捗表示(動作確認用)
     ctx.textAlign = "left";
-    ctx.font = "16px monospace";
+    ctx.font = "16px 'NegaTape', monospace";
     const stage = currentStage();
     const speciesName = currentSpecies().name;
     let progress = "";
@@ -937,13 +937,13 @@
 
     // 年代表示(画面端。進むにつれて減っていき、ニワトリで NOW になる)
     ctx.textAlign = "left";
-    ctx.font = "14px monospace";
+    ctx.font = "14px 'NegaTape', monospace";
     ctx.fillText(currentYearsLabel(), 10, CONFIG.canvasHeight - 10);
 
     // 産卵演出: 完全停止中は画面中央にその世代の結果を表示
     if (player.state === "laying" && player.layPhase === "hold" && player.layResult) {
       ctx.textAlign = "center";
-      ctx.font = "26px monospace";
+      ctx.font = "26px 'NegaTape', monospace";
       ctx.fillText(
         `GEN ${player.layResult.generation} ${Math.floor(player.layResult.distance)}m`,
         CONFIG.canvasWidth / 2,
@@ -1016,7 +1016,7 @@
     ctx.textAlign = "center";
     const centerX = CONFIG.canvasWidth / 2;
 
-    ctx.font = "26px monospace";
+    ctx.font = "26px 'NegaTape', monospace";
     ctx.fillText("GAME OVER", centerX, panelY + 38);
 
     ctx.strokeStyle = "#cccccc";
@@ -1026,14 +1026,14 @@
     ctx.lineTo(panelX + panelWidth - 20, panelY + 52);
     ctx.stroke();
 
-    ctx.font = "18px monospace";
+    ctx.font = "18px 'NegaTape', monospace";
     ctx.fillText(`${generationLog.length} GEN  ${formatDistanceComma(distanceMeters)}`, centerX, panelY + 80);
 
-    ctx.font = "11px monospace";
+    ctx.font = "11px 'NegaTape', monospace";
     ctx.fillStyle = "#888888";
     ctx.fillText("RECENT GENERATIONS", centerX, panelY + 100);
 
-    ctx.font = "13px monospace";
+    ctx.font = "13px 'NegaTape', monospace";
     ctx.fillStyle = "#000000";
     const maxRows = 6;
     const shown = generationLog.slice(-maxRows);
@@ -1044,7 +1044,7 @@
     // リトライ操作を受け付け始めたら(retryCooldown経過後)、案内文を点滅させて目立たせる
     const blinkVisible = retryCooldown > 0 || Math.floor(resultBlinkCounter / r.retryBlinkIntervalFrames) % 2 === 0;
     if (blinkVisible) {
-      ctx.font = "15px monospace";
+      ctx.font = "15px 'NegaTape', monospace";
       ctx.fillText("TAP / CLICK / SPACE TO RETRY", centerX, panelY + panelHeight - 16);
     }
   }
@@ -1060,13 +1060,13 @@
     const centerX = CONFIG.canvasWidth / 2;
     const centerY = CONFIG.canvasHeight / 2;
 
-    ctx.font = "34px monospace";
+    ctx.font = "34px 'NegaTape', monospace";
     ctx.fillText(t.title, centerX, centerY - 30);
 
-    ctx.font = "16px monospace";
+    ctx.font = "16px 'NegaTape', monospace";
     ctx.fillText(t.subtitle, centerX, centerY - 4);
 
-    ctx.font = "15px monospace";
+    ctx.font = "15px 'NegaTape', monospace";
     ctx.fillText(t.startPrompt, centerX, centerY + 40);
   }
 
@@ -1083,7 +1083,7 @@
 
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
-    ctx.font = "26px monospace";
+    ctx.font = "26px 'NegaTape', monospace";
     ctx.fillText("PAUSED", CONFIG.canvasWidth / 2, labelY);
   }
 

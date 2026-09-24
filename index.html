@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>命のバトン恐竜ラン(仮) - プロトタイプ</title>
 <style>
+  @font-face {
+    font-family: "NegaTape";
+    src: url("assets/fonts/x5y8pxNegaTape.woff2") format("woff2"),
+         url("assets/fonts/x5y8pxNegaTape.ttf") format("truetype");
+    font-display: block; /* 読み込み中は文字を出さず、フォント確定後にまとめて表示する */
+  }
   html, body {
     margin: 0;
     padding: 0;
@@ -31,7 +37,7 @@
     transform: translateX(-50%);
     width: 30px;
     height: 30px;
-    font: 16px monospace;
+    font: 16px "NegaTape", monospace;
     line-height: 1;
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid #333333;
