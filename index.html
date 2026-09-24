@@ -18,11 +18,32 @@
     background: #ffffff;
     border: 2px solid #333333;
     touch-action: none;
+    display: block;
+  }
+  .game-wrap {
+    position: relative;
+    line-height: 0; /* canvas下の余白でボタン位置がずれるのを防ぐ */
+  }
+  #pauseBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    font: 16px monospace;
+    line-height: 1;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid #333333;
+    cursor: pointer;
+    display: none; /* ゲームプレイ中だけgame.jsが表示する */
   }
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
+<div class="game-wrap">
+  <canvas id="game"></canvas>
+  <button id="pauseBtn" aria-label="pause">||</button>
+</div>
 <script src="config.js"></script>
 <script src="game.js"></script>
 </body>

@@ -23,6 +23,9 @@
   let generationLog;
   let gameOver;
   let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
+  let screen = "title"; // "title" | "playing" (ゲームオーバーはscreen="playing"のままgameOverフラグで表す)
+  let paused = false;
+  let resultBlinkCounter; // 結果画面でリトライ案内を点滅させるためのカウンタ
   let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
   let groundScrollX; // 地面模様(groundSprite)のスクロール位置(px)
   let lastParent; // 直近の産卵で残った親(次の世代が孵化した瞬間、骨の姿に切り替える対象)
@@ -336,7 +339,9 @@
     foodTimer = randomInterval(foodIntervalRange(1));
     generationLog = [];
     gameOver = false;
+    paused = false;
     retryCooldown = 0;
+    resultBlinkCounter = 0;
     runAnimFrameCounter = 0;
     groundScrollX = 0;
     lastParent = null;
@@ -674,6 +679,7 @@
       // ヒナで被弾 → 血筋が途絶える
       gameOver = true;
       retryCooldown = CONFIG.retryCooldownFrames;
+      resultBlinkCounter = 0;
       recordGeneration();
       return;
     }
@@ -688,6 +694,7 @@
   function update() {
     if (gameOver) {
       if (retryCooldown > 0) retryCooldown--;
+      else resultBlinkCounter++;
       return;
     }
 
@@ -978,29 +985,124 @@
     }
 
     if (gameOver) {
-      ctx.textAlign = "center";
-      ctx.font = "28px monospace";
-      ctx.fillText("GAME OVER", CONFIG.canvasWidth / 2, 90);
+      drawResultScreen();
+    }
 
-      ctx.font = "18px monospace";
-      ctx.fillText(`${generationLog.length} GEN  ${formatDistanceComma(distanceMeters)}`, CONFIG.canvasWidth / 2, 125);
-
-      ctx.font = "14px monospace";
-      const maxRows = 6;
-      const shown = generationLog.slice(-maxRows);
-      shown.forEach((g, i) => {
-        ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, CONFIG.canvasWidth / 2, 150 + i * 18);
-      });
-
-      ctx.font = "16px monospace";
-      ctx.fillText("TAP / CLICK / SPACE TO RETRY", CONFIG.canvasWidth / 2, 150 + shown.length * 18 + 20);
+    if (screen === "title") {
+      drawTitleScreen();
+    } else if (paused) {
+      drawPausedOverlay();
     }
   }
 
+  // 結果画面: 背景を暗く覆い、中央のパネルに世代数・距離・直近の世代ログを表示する
+  function drawResultScreen() {
+    const r = CONFIG.resultScreen;
+    ctx.fillStyle = r.dimColor;
+    ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+    const panelWidth = 360;
+    const panelHeight = 235;
+    const panelX = (CONFIG.canvasWidth - panelWidth) / 2;
+    const panelY = 30;
+
+    ctx.fillStyle = r.panelColor;
+    ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+    ctx.strokeStyle = r.panelBorderColor;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    const centerX = CONFIG.canvasWidth / 2;
+
+    ctx.font = "26px monospace";
+    ctx.fillText("GAME OVER", centerX, panelY + 38);
+
+    ctx.strokeStyle = "#cccccc";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(panelX + 20, panelY + 52);
+    ctx.lineTo(panelX + panelWidth - 20, panelY + 52);
+    ctx.stroke();
+
+    ctx.font = "18px monospace";
+    ctx.fillText(`${generationLog.length} GEN  ${formatDistanceComma(distanceMeters)}`, centerX, panelY + 80);
+
+    ctx.font = "11px monospace";
+    ctx.fillStyle = "#888888";
+    ctx.fillText("RECENT GENERATIONS", centerX, panelY + 100);
+
+    ctx.font = "13px monospace";
+    ctx.fillStyle = "#000000";
+    const maxRows = 6;
+    const shown = generationLog.slice(-maxRows);
+    shown.forEach((g, i) => {
+      ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, centerX, panelY + 120 + i * 17);
+    });
+
+    // リトライ操作を受け付け始めたら(retryCooldown経過後)、案内文を点滅させて目立たせる
+    const blinkVisible = retryCooldown > 0 || Math.floor(resultBlinkCounter / r.retryBlinkIntervalFrames) % 2 === 0;
+    if (blinkVisible) {
+      ctx.font = "15px monospace";
+      ctx.fillText("TAP / CLICK / SPACE TO RETRY", centerX, panelY + panelHeight - 16);
+    }
+  }
+
+  // タイトル画面: ゲーム名と開始案内を表示する(背後にはリセット直後のゲーム画面が見えている)
+  function drawTitleScreen() {
+    const t = CONFIG.titleScreen;
+    ctx.fillStyle = t.dimColor;
+    ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    const centerX = CONFIG.canvasWidth / 2;
+    const centerY = CONFIG.canvasHeight / 2;
+
+    ctx.font = "34px monospace";
+    ctx.fillText(t.title, centerX, centerY - 30);
+
+    ctx.font = "16px monospace";
+    ctx.fillText(t.subtitle, centerX, centerY - 4);
+
+    ctx.font = "15px monospace";
+    ctx.fillText(t.startPrompt, centerX, centerY + 40);
+  }
+
+  // 一時停止中のオーバーレイ: ゲーム画面はそのまま見えるように、薄く覆うだけにする
+  function drawPausedOverlay() {
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.font = "26px monospace";
+    ctx.fillText("PAUSED", CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2);
+  }
+
   function loop() {
-    update();
+    if (screen === "playing" && !paused) update();
     draw();
+    syncPauseButton();
     requestAnimationFrame(loop);
+  }
+
+  // タイトル画面での最初の操作でゲームを始める
+  function startGame() {
+    screen = "playing";
+  }
+
+  // 一時停止ボタン: プレイ中(ゲームオーバーでない)時だけ表示し、押すたびに一時停止/再開を切り替える
+  const pauseBtn = document.getElementById("pauseBtn");
+  pauseBtn.addEventListener("click", () => {
+    if (screen !== "playing" || gameOver) return;
+    paused = !paused;
+    pauseBtn.textContent = paused ? "▶" : "||";
+  });
+  function syncPauseButton() {
+    const shouldShow = screen === "playing" && !gameOver;
+    const display = shouldShow ? "block" : "none";
+    if (pauseBtn.style.display !== display) pauseBtn.style.display = display;
   }
 
   // 操作: PC(↑/スペース=ジャンプ、↓=しゃがみ/急降下、←→=左右移動)とスマホ(タップ=ジャンプ、スワイプ=上下左右)
@@ -1016,10 +1118,15 @@
     const direction = KEY_DIRECTION[e.code];
     if (!direction) return;
     e.preventDefault();
+    if (screen === "title") {
+      startGame();
+      return;
+    }
     if (gameOver) {
       if (retryCooldown <= 0) reset();
       return;
     }
+    if (paused) return;
     player.input[direction] = true;
   });
   window.addEventListener("keyup", (e) => {
@@ -1029,10 +1136,15 @@
   });
 
   canvas.addEventListener("mousedown", () => {
+    if (screen === "title") {
+      startGame();
+      return;
+    }
     if (gameOver) {
       if (retryCooldown <= 0) reset();
       return;
     }
+    if (paused) return;
     player.input.up = true;
   });
   window.addEventListener("mouseup", () => {
@@ -1045,11 +1157,16 @@
     "touchstart",
     (e) => {
       e.preventDefault();
+      if (screen === "title") {
+        startGame();
+        return;
+      }
       if (gameOver) {
         if (retryCooldown <= 0) reset();
         touchStart = null;
         return;
       }
+      if (paused) return;
       const t = e.changedTouches[0];
       touchStart = { x: t.clientX, y: t.clientY };
     },

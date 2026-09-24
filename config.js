@@ -316,4 +316,20 @@ const CONFIG = {
 
   // 距離表示
   metersPerFrame: 0.1, // スクロール速度(px/フレーム)に応じた見かけ上の距離換算
+
+  // タイトル画面: ゲーム開始前に表示し、何か操作すると始まる
+  titleScreen: {
+    title: "LIFE'S BATON",
+    subtitle: "DINOSAUR RUN",
+    startPrompt: "TAP / CLICK / SPACE TO START",
+    dimColor: "rgba(255,255,255,0.75)", // タイトル文字の背後を薄く白で覆って読みやすくする
+  },
+
+  // 結果画面(ゲームオーバー時)の見た目
+  resultScreen: {
+    dimColor: "rgba(0,0,0,0.35)", // 背後のゲーム画面を暗く覆う
+    panelColor: "#ffffff",
+    panelBorderColor: "#000000",
+    retryBlinkIntervalFrames: 20, // リトライ操作を受け付け始めたら、この周期で案内文を点滅させる
+  },
 };
