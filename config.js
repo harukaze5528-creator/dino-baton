@@ -15,7 +15,7 @@ const CONFIG = {
   sounds: {
     volume: 0.5,
     volumes: {
-      jump: 0.25, // ジャンプ音は他より耳につきやすいので控えめにする
+      jump: 0.12, // ジャンプ音は他より耳につきやすいのでさらに控えめにする
     },
     jump: "assets/jump.wav", // ジャンプした瞬間
     pickup: "assets/pickup.wav", // エサ(木の実)を取った瞬間
