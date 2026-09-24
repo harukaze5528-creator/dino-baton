@@ -1008,7 +1008,7 @@
     ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
     const panelWidth = 360;
-    const panelHeight = 235;
+    const panelHeight = 260;
     const panelX = (CONFIG.canvasWidth - panelWidth) / 2;
     const panelY = 30;
 
@@ -1032,19 +1032,28 @@
     ctx.lineTo(panelX + panelWidth - 20, panelY + 52);
     ctx.stroke();
 
-    ctx.font = "18px 'NegaTape', monospace";
-    ctx.fillText(`${generationLog.length} GEN  ${formatDistanceComma(distanceMeters)}`, centerX, panelY + 80);
+    // 到達した世代数(GEN)を最も目立つ大きさで強調する
+    ctx.font = "11px 'NegaTape', monospace";
+    ctx.fillStyle = "#888888";
+    ctx.fillText("GENERATION REACHED", centerX, panelY + 70);
+
+    ctx.font = "44px 'NegaTape', monospace";
+    ctx.fillStyle = "#000000";
+    ctx.fillText(`${generationLog.length}`, centerX, panelY + 110);
+
+    ctx.font = "14px 'NegaTape', monospace";
+    ctx.fillText(`${formatDistanceComma(distanceMeters)} TOTAL`, centerX, panelY + 130);
 
     ctx.font = "11px 'NegaTape', monospace";
     ctx.fillStyle = "#888888";
-    ctx.fillText("RECENT GENERATIONS", centerX, panelY + 100);
+    ctx.fillText("RECENT GENERATIONS", centerX, panelY + 148);
 
     ctx.font = "13px 'NegaTape', monospace";
     ctx.fillStyle = "#000000";
     const maxRows = 6;
     const shown = generationLog.slice(-maxRows);
     shown.forEach((g, i) => {
-      ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, centerX, panelY + 120 + i * 17);
+      ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, centerX, panelY + 166 + i * 13);
     });
 
     // リトライ操作を受け付け始めたら(retryCooldown経過後)、案内文を点滅させて目立たせる
