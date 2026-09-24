@@ -1070,14 +1070,21 @@
     ctx.fillText(t.startPrompt, centerX, centerY + 40);
   }
 
-  // 一時停止中のオーバーレイ: ゲーム画面はそのまま見えるように、薄く覆うだけにする
+  // 一時停止中のオーバーレイ: ゲーム画面はそのまま見えるように、薄く覆うだけにする。
+  // 産卵演出の停止中は画面中央に世代結果が表示されるため、それと重ならない位置に
+  // 白い帯を敷いてから「PAUSED」を出す
   function drawPausedOverlay() {
     ctx.fillStyle = "rgba(255,255,255,0.6)";
     ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+    const labelY = 70;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, labelY - 20, CONFIG.canvasWidth, 34);
+
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     ctx.font = "26px monospace";
-    ctx.fillText("PAUSED", CONFIG.canvasWidth / 2, CONFIG.canvasHeight / 2);
+    ctx.fillText("PAUSED", CONFIG.canvasWidth / 2, labelY);
   }
 
   function loop() {
