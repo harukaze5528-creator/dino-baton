@@ -4,6 +4,9 @@
   const ctx = canvas.getContext("2d");
   canvas.width = CONFIG.canvasWidth;
   canvas.height = CONFIG.canvasHeight;
+  // ドット絵を大きい元画像から小さく縮小して描くため、ブラウザ既定の補間(スムージング)を切る。
+  // 補間ありだと縮小時ににじんで輪郭が荒く見えるが、切るとくっきりしたドット絵らしい見た目になる
+  ctx.imageSmoothingEnabled = false;
 
   const groundY = CONFIG.canvasHeight - CONFIG.groundHeight;
 
