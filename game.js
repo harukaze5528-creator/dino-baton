@@ -259,13 +259,23 @@
     return `${yearsLater.toLocaleString("en-US")} YEARS LATER`;
   }
 
-  // 世代ごとのベース速度(これに成長段階の speedMultiplier を掛けたものが実際のスクロール速度)
-  // flatUntilGenerationまでは一定。それ以降(先祖返り後のヒナ以降)はafterFlatStartのまま
-  // ずっと一定(世代が1つ進むごとの増減はなし。種が変わっても周回してもリセットしないし、
-  // これ以上増えもしない)
-  function genBaseSpeed(generation) {
+  // 周回(LOOP)ごとのベース速度。1周の中ではずっと一定(世代が1つ進むごとの増減はなし)。
+  // 2周目以降は、直前の周回の「大人の最高速度」と新しい周回の「ヒナの速度」がちょうど一致する
+  // ように、大人とヒナのspeedMultiplierの比率を毎周回掛けて求める(種のspeedMultiplierは
+  // 全種共通なので相殺される)。これを繰り返すと指数的に上がっていくので、maxで頭打ちにする
+  function loopBaseSpeed(loop) {
     const d = CONFIG.difficulty.baseSpeed;
-    return generation <= d.flatUntilGeneration ? d.start : d.afterFlatStart;
+    const chickMult = CONFIG.stages[1].speedMultiplier;
+    const adultMult = CONFIG.stages[CONFIG.stages.length - 1].speedMultiplier;
+    const firstSpeciesMult = CONFIG.species[0].speedMultiplier;
+    const lastSpeciesMult = CONFIG.species[CONFIG.species.length - 1].speedMultiplier;
+    const ratioPerLoop = (adultMult * lastSpeciesMult) / (chickMult * firstSpeciesMult);
+    return Math.min(d.start * Math.pow(ratioPerLoop, loop - 1), d.max);
+  }
+
+  // 世代ごとのベース速度(これに成長段階の speedMultiplier を掛けたものが実際のスクロール速度)
+  function genBaseSpeed(generation) {
+    return loopBaseSpeed(loopForGeneration(generation));
   }
 
   // 世代が進むほど密になる障害物の出現間隔(フレーム数)
