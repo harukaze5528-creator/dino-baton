@@ -216,7 +216,7 @@ const CONFIG = {
       color: "#4a4a6a",
       spriteFrames: ["assets/ptera1.png", "assets/ptera2.png"], // 羽ばたきで交互に切り替える
     },
-    { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 40, height: 12, color: "#6a1a1a" },
+    { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 40, height: 12, color: "#6a1a1a", sprite: "assets/needle.png" },
     // segmentKind: 群れを構成する1羽あたりの見た目をどのkindから借りるか(flyerと共通にする)
     { id: "flock", behavior: "flock", unlockGeneration: 5, weight: 0.7, segmentKind: "flyer", gapHeight: 28, topMargin: 30 },
   ],
