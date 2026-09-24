@@ -371,6 +371,7 @@
     runAnimFrameCounter = 0;
     groundScrollX = 0;
     lastParent = null;
+    bgm.currentTime = 0; // リトライ時もBGMを最初から鳴らし直す
   }
 
   // 走りアニメーション(run1.png/run2.png)のうち今どちらを表示するか(0か1)
