@@ -89,13 +89,18 @@ const CONFIG = {
   // その代わりに世代が進むごとにベース速度と障害物密度を上げ、エサの出現頻度を下げていく
   difficulty: {
     // ベース速度(このあと段階ごとの speedMultiplier を掛けたものが実際のスクロール速度になる)
-    // flatUntilGenerationまでは一定speedで、それ以降は世代をまたぐたびに少しずつ上がり続ける
-    // (種が変わっても周回[LOOP]してもリセットしない)
+    // flatUntilGenerationまでは一定speedで、それ以降(先祖返りしたニワトリの次のティラノサウルスの
+    // ヒナ以降)はafterFlatStartのまま一定になる(世代が1つ進むごとの増減はなし。種が変わっても
+    // 周回[LOOP]してもリセットしないし、これ以上増えもしない)
     baseSpeed: {
       start: 7, // flatUntilGenerationまでのベース速度
       flatUntilGeneration: 5, // ここまでは速度を上げない(1周目=1〜5世代はまだ一定のまま)
-      perGeneration: 0.3, // flatUntilGenerationを過ぎたあと、世代が1つ進むごとに増える量
-      max: 30, // 上限(実質かなり遠い将来の安全装置)
+      // flatUntilGenerationの次の世代(gen6、先祖返り後のヒナ)以降、ずっとこの値のまま。
+      // ヒナ(speedMultiplier 0.8)×種倍率(0.95)を掛けると8.645になり、1〜5世代目の大人の
+      // 最高速度(7×1.3×0.95)とちょうど一致する(=大人からヒナへ切り替わる瞬間の速度が
+      // 途切れず滑らかに続く)。ニワトリの世代もこの同じ値を使うので、周回内で速度が
+      // 変わることはない
+      afterFlatStart: 11.375,
     },
     // 障害物の出現間隔(フレーム数)。短いほど密度が高い
     obstacleInterval: {
