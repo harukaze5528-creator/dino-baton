@@ -279,8 +279,11 @@ const CONFIG = {
   meteorEvent: {
     fallFrames: 60, // 隕石が画面右上から落ちてくる時間
     flashFrames: 20, // 着弾の閃光
-    color: "#3a1a0a", // 隕石本体の色
+    color: "#3a1a0a", // 隕石本体の色(sprite未読み込み時のフォールバックにも使う)
     flashColor: "#fff3d0", // 着弾時に画面全体を覆う閃光の色
+    sprite: "assets/meteor.png", // 隕石本体のドット絵
+    width: 34, // 隕石の表示サイズ(元画像は縦長なので、正方形だった頃より少し横長にしている)
+    height: 39,
   },
 
   // エサ

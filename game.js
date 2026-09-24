@@ -46,6 +46,9 @@
   // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
   const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
 
+  // 隕石イベントで降ってくる隕石のドット絵
+  const meteorSpriteEntry = getOrLoadImage(CONFIG.meteorEvent.sprite);
+
   // プレイヤーのドット絵スプライト(卵・ヒナ。種専用の絵がない場合の共通フォールバック)。
   // assets/配下のPNGはあらかじめ背景を透過処理済み(制作ツール側の白いベタ塗り背景を
   // 透明化してある)。ここではgetImageDataなどのピクセル読み取りは一切行わない。
@@ -898,8 +901,15 @@
         const startY = 0;
         const endX = CONFIG.canvasWidth / 2;
         const endY = groundY;
-        ctx.fillStyle = m.color;
-        ctx.fillRect(startX + (endX - startX) * t, startY + (endY - startY) * t, 20, 20);
+        const meteorX = startX + (endX - startX) * t;
+        const meteorY = startY + (endY - startY) * t;
+        const meteorImg = meteorSpriteEntry.img;
+        if (meteorImg) {
+          ctx.drawImage(meteorImg, meteorX, meteorY, m.width, m.height);
+        } else {
+          ctx.fillStyle = m.color;
+          ctx.fillRect(meteorX, meteorY, m.width, m.height);
+        }
       } else {
         ctx.fillStyle = m.flashColor;
         ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
