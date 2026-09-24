@@ -108,8 +108,10 @@ const CONFIG = {
   // 小さいサイズで描画する(専用の縮小版画像は用意しない)
   // runSprite: spriteの代わりに、種専用の走りアニメーション2枚を指定する場合に使う
   // ([フレーム1, フレーム2]。両方指定した場合はrunSpriteが優先される)
-  // chickSprite: ヒナの見た目に使う種専用のドット絵。指定がない種は汎用のchick.pngを使う
+  // chickSprite: ヒナの見た目に使う種専用の静止画。指定がない種は汎用のchick.pngを使う
   // (卵は種によらず常にegg.pngを使う)
+  // chickRunSprite: chickSpriteの代わりに、ヒナ用の走りアニメーション2枚を指定する場合に
+  // 使う([フレーム1, フレーム2]。両方指定した場合はchickRunSpriteが優先される)
   species: [
     {
       name: "TYRANNOSAURUS",
@@ -174,7 +176,9 @@ const CONFIG = {
       yearsAgoStart: 8000,
       yearsAgoEnd: 0,
       sprite: "assets/chicken.png",
+      // runSprite: ["assets/chicken-run1.png", "assets/chicken-run2.png"], // chicken-run1.pngの中身が2匹分入ってしまっているため一時的に無効化(直ったら復活させる)
       chickSprite: "assets/chicken-chick.png",
+      chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       obstacleVisuals: {
         spike: { color: "#4a8a4a", width: 20, height: 20 }, // サボテン
       },
