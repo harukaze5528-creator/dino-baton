@@ -1115,6 +1115,7 @@
     if (screen !== "playing" || gameOver) return;
     paused = !paused;
     pauseBtn.textContent = paused ? "▶" : "||";
+    playSound("pause");
   });
   function syncPauseButton() {
     const shouldShow = screen === "playing" && !gameOver;

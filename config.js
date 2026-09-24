@@ -23,6 +23,7 @@ const CONFIG = {
     hatch: "assets/hatch.m4a", // 卵からヒナが孵った瞬間
     lay: "assets/lay.mp3", // 大人が産卵を始めた瞬間
     meteor: "assets/meteor.m4a", // 隕石が降ってくる瞬間(飛来音込み)
+    pause: "assets/pause.mp3", // 一時停止ボタンを押した瞬間(再開時も鳴らす)
   },
 
   // 空を流れる雲。種によらず共通
