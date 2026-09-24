@@ -196,7 +196,7 @@ const CONFIG = {
       runSprite: ["assets/phorusrhacos-run1.png", "assets/phorusrhacos-run2.png"],
       skeletonSprite: "assets/phorusrhacos-skeleton.png",
       obstacleVisuals: {
-        spike: { color: "#a68a4a", width: 21, height: 26, sprite: "assets/cactus.png" }, // 乾いた棘の茂み→サボテンの絵を流用
+        spike: { color: "#a68a4a", width: 21, height: 26, sprite: "assets/vine.png" }, // 地面から伸びるツタ
       },
     },
     {
