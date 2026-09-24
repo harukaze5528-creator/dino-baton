@@ -152,7 +152,7 @@ const CONFIG = {
       yearsAgoEnd: 66000000,
       skeletonSprite: "assets/tyrannosaurus-skeleton.png", // 次の世代が生まれた瞬間、親をこの骨の姿に切り替える
       obstacleVisuals: {
-        spike: { color: "#4a6a2a", width: 18, height: 36, sprite: "assets/vine.png" }, // 地面から伸びるツタ
+        spike: { color: "#4a6a2a", width: 18, height: 36, sprite: "assets/needle.png" }, // トゲのある植物→サボテンの絵を流用
       },
     },
     {
@@ -167,7 +167,7 @@ const CONFIG = {
       runSprite: ["assets/asteriornis-run1.png", "assets/asteriornis-run2.png"],
       skeletonSprite: "assets/asteriornis-skeleton.png",
       obstacleVisuals: {
-        spike: { color: "#7a6a52", width: 21, height: 29, sprite: "assets/vine.png" }, // 地面から伸びるツタ
+        spike: { color: "#7a6a52", width: 21, height: 29, sprite: "assets/needle.png" }, // トゲのある植物→サボテンの絵を流用
       },
     },
     {
@@ -182,7 +182,7 @@ const CONFIG = {
       runSprite: ["assets/gastornis-run1.png", "assets/gastornis-run2.png"],
       skeletonSprite: "assets/gastornis-skeleton.png",
       obstacleVisuals: {
-        spike: { color: "#3a5a2a", width: 18, height: 36, sprite: "assets/vine.png" }, // 地面から伸びるツタ
+        spike: { color: "#3a5a2a", width: 18, height: 36, sprite: "assets/needle.png" }, // トゲのある植物→サボテンの絵を流用
       },
     },
     {
@@ -197,7 +197,7 @@ const CONFIG = {
       runSprite: ["assets/phorusrhacos-run1.png", "assets/phorusrhacos-run2.png"],
       skeletonSprite: "assets/phorusrhacos-skeleton.png",
       obstacleVisuals: {
-        spike: { color: "#a68a4a", width: 21, height: 26, sprite: "assets/vine.png" }, // 地面から伸びるツタ
+        spike: { color: "#a68a4a", width: 21, height: 26, sprite: "assets/needle.png" }, // トゲのある植物→サボテンの絵を流用
       },
     },
     {
@@ -266,7 +266,7 @@ const CONFIG = {
       color: "#4a4a6a",
       spriteFrames: ["assets/ptera1.png", "assets/ptera2.png"], // 羽ばたきで交互に切り替える
     },
-    { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 52, height: 16, color: "#6a1a1a", sprite: "assets/needle.png" },
+    { id: "pit", behavior: "pit", unlockGeneration: 4, weight: 0.8, width: 52, height: 16, color: "#6a1a1a", sprite: "assets/vine.png" }, // 地面から伸びる低いツタ
     // segmentKind: 群れを構成する1羽あたりの見た目をどのkindから借りるか(flyerと共通にする)
     { id: "flock", behavior: "flock", unlockGeneration: 5, weight: 0.7, segmentKind: "flyer", gapHeight: 36, topMargin: 39 },
   ],
