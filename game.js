@@ -21,6 +21,7 @@
   let gameOver;
   let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
   let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
+  let groundScrollX; // 地面模様(groundSprite)のスクロール位置(px)
 
   // 障害物用のドット絵を読み込んで使い回すキャッシュ(パス文字列 → { img })。
   // imgはロード完了までnullなので、参照した時点でまだ読み込み中でも壊れない
@@ -38,6 +39,9 @@
     }
     return entry;
   }
+
+  // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
+  const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
 
   // プレイヤーのドット絵スプライト(卵・ヒナ。種専用の絵がない場合の共通フォールバック)。
   // assets/配下のPNGはあらかじめ背景を透過処理済み(制作ツール側の白いベタ塗り背景を
@@ -303,6 +307,7 @@
     gameOver = false;
     retryCooldown = 0;
     runAnimFrameCounter = 0;
+    groundScrollX = 0;
   }
 
   // 走りアニメーション(run1.png/run2.png)のうち今どちらを表示するか(0か1)
@@ -645,6 +650,7 @@
       currentSpeed = genBaseSpeed(player.generation) * currentStage().speedMultiplier * currentSpecies().speedMultiplier;
     }
     distanceMeters += currentSpeed * CONFIG.metersPerFrame;
+    groundScrollX += currentSpeed;
 
     if (player.state === "active") {
       runAnimFrameCounter++;
@@ -774,9 +780,18 @@
       ctx.fillRect(c.x + c.width * 0.5, c.y + c.height * 0.1, c.width * 0.4, c.height * 0.6);
     });
 
-    // 地面
-    ctx.fillStyle = "#999999";
+    // 地面(下地の色の上に、模様(線とドット)をスクロールさせながら重ねて描く)
+    ctx.fillStyle = CONFIG.groundColor;
     ctx.fillRect(0, groundY, CONFIG.canvasWidth, CONFIG.groundHeight);
+    const groundImg = groundSpriteEntry && groundSpriteEntry.img;
+    if (groundImg) {
+      const tileHeight = CONFIG.groundHeight;
+      const tileWidth = groundImg.naturalWidth * (tileHeight / groundImg.naturalHeight);
+      const offset = groundScrollX % tileWidth;
+      for (let x = -offset; x < CONFIG.canvasWidth; x += tileWidth) {
+        ctx.drawImage(groundImg, x, groundY, tileWidth, tileHeight);
+      }
+    }
 
     // 産卵後に残された親(産んだ直後は一瞬つぶれてから元の高さに戻る)
     // 親は産卵直前(ADULT)の姿のまま残るので、常にADULTのスプライト(stageIndex 3)を使う

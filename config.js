@@ -4,6 +4,8 @@ const CONFIG = {
   canvasHeight: 300,
   groundHeight: 40,
   skyColor: "#f7f7f7", // 空(背景)の色。種によらず全種共通(原作のChrome恐竜ゲームと同じ白系)
+  groundColor: "#999999", // 地面の下地の色(groundSpriteが読み込めない場合のフォールバックにも使う)
+  groundSprite: "assets/ground.png", // 地面に重ねて描く模様(線とドット)。スクロールに合わせて流れる
 
   // 空を流れる雲。種によらず共通
   clouds: {
