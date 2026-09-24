@@ -11,6 +11,16 @@ const CONFIG = {
   // でこぼこ(草や小石の盛り上がり)は当たり判定に関係ない飾りとして扱う
   groundLineRatio: 0.25,
 
+  // 効果音。volumeは0(無音)〜1(最大)
+  sounds: {
+    volume: 0.5,
+    jump: "assets/jump.wav", // ジャンプした瞬間
+    pickup: "assets/pickup.wav", // エサ(木の実)を取った瞬間
+    damage: "assets/damage.mp3", // 障害物に当たって若返った/ゲームオーバーになった瞬間
+    hatch: "assets/hatch.m4a", // 卵からヒナが孵った瞬間
+    lay: "assets/lay.mp3", // 大人が産卵を始めた瞬間
+  },
+
   // 空を流れる雲。種によらず共通
   clouds: {
     color: "#dcdcdc",

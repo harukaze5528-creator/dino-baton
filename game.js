@@ -44,6 +44,24 @@
     return entry;
   }
 
+  // 効果音: あらかじめ読み込んでおき、鳴らすたびに複製して再生する(短時間に連続で
+  // 鳴っても前の再生を止めずに重ねられるようにするため)。ブラウザの自動再生制限で
+  // 最初のユーザー操作より前の再生に失敗しても無視する(キー入力等で以後は再生できる)
+  const soundElements = {};
+  Object.keys(CONFIG.sounds).forEach((key) => {
+    if (key === "volume") return;
+    const audio = new Audio(CONFIG.sounds[key]);
+    audio.volume = CONFIG.sounds.volume;
+    soundElements[key] = audio;
+  });
+  function playSound(key) {
+    const base = soundElements[key];
+    if (!base) return;
+    const instance = base.cloneNode();
+    instance.volume = CONFIG.sounds.volume;
+    instance.play().catch(() => {});
+  }
+
   // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
   const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
 
@@ -344,6 +362,7 @@
     player.onGround = false;
     player.jumping = true;
     player.jumpHoldFrames = 0;
+    playSound("jump");
   }
 
   // スマホの下スワイプ: 地上ならしゃがみを一定時間、空中なら一度だけ強く急降下させる
@@ -524,10 +543,12 @@
     player.stageIndex = 1; // ヒナ
     player.foodEaten = 0;
     resizeToStage();
+    playSound("hatch");
   }
 
   function startLaying() {
     // 産卵演出を開始: 親をその場に残し、プレイヤーは卵に切り替わる(孵化はholdフェーズの終わりで起きる)
+    playSound("lay");
     const oldSpeciesIndex = speciesIndexForGeneration(player.generation);
 
     const newParent = {
@@ -631,6 +652,7 @@
   function eatFood() {
     const stage = currentStage();
     if (stage.isEgg) return;
+    playSound("pickup");
     player.foodEaten++;
     if (player.foodEaten < stage.foodToGrow) return;
 
@@ -645,6 +667,8 @@
   function takeDamage() {
     if (currentStage().isEgg) return; // 卵は無敵
     if (player.invulnFrames > 0) return;
+
+    playSound("damage");
 
     if (player.stageIndex === 1) {
       // ヒナで被弾 → 血筋が途絶える
