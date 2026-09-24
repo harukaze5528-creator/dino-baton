@@ -291,9 +291,10 @@ const CONFIG = {
 
   // エサ
   food: {
-    width: 10,
-    height: 10,
+    width: 14,
+    height: 14,
     color: "#999999",
+    sprite: "assets/berry.png", // 木の実
     heightAboveGround: [0, 70], // 地面すれすれ〜ジャンプで届く高さの範囲でランダム配置
   },
 

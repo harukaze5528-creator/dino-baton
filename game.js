@@ -49,6 +49,9 @@
   // 隕石イベントで降ってくる隕石のドット絵(2枚を交互に切り替えて炎が揺れて見えるようにする)
   const meteorSpriteFrames = CONFIG.meteorEvent.spriteFrames.map(getOrLoadImage);
 
+  // エサ(木の実)のドット絵
+  const foodSpriteEntry = getOrLoadImage(CONFIG.food.sprite);
+
   // プレイヤーのドット絵スプライト(卵・ヒナ。種専用の絵がない場合の共通フォールバック)。
   // assets/配下のPNGはあらかじめ背景を透過処理済み(制作ツール側の白いベタ塗り背景を
   // 透明化してある)。ここではgetImageDataなどのピクセル読み取りは一切行わない。
@@ -847,9 +850,16 @@
       }
     });
 
-    // エサ
-    ctx.fillStyle = CONFIG.food.color;
-    foods.forEach((f) => ctx.fillRect(f.x, f.y, f.width, f.height));
+    // エサ(木の実。ドット絵があればそれを描画し、なければ今まで通り矩形で描画する)
+    const foodImg = foodSpriteEntry && foodSpriteEntry.img;
+    foods.forEach((f) => {
+      if (foodImg) {
+        ctx.drawImage(foodImg, f.x, f.y, f.width, f.height);
+      } else {
+        ctx.fillStyle = CONFIG.food.color;
+        ctx.fillRect(f.x, f.y, f.width, f.height);
+      }
+    });
 
     // 世代・距離表示
     ctx.fillStyle = "#000000";
