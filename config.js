@@ -123,7 +123,7 @@ const CONFIG = {
 
   // 1周目が「NOW」に達したあと(=先祖返り後)は年代表示が「n YEARS LATER」形式に切り替わり、
   // 世代が進むごとに増え続ける(このあとは「YEARS AGO」には戻らない)
-  yearsLaterPerGeneration: 1000,
+  yearsLaterPerGeneration: 10000,
 
   // 種の移り変わり(年代順)。ティラノサウルス→…→ニワトリで一周し、以降はまた最初から
   // jumpMultiplier/sizeMultiplier/speedMultiplier はティラノサウルスの数値に統一。
