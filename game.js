@@ -1076,6 +1076,7 @@
     if (screen === "playing" && !paused) update();
     draw();
     syncPauseButton();
+    syncShareButton();
     syncBgm();
     requestAnimationFrame(loop);
   }
@@ -1104,6 +1105,18 @@
     const shouldShow = screen === "playing" && !gameOver;
     const display = shouldShow ? "block" : "none";
     if (pauseBtn.style.display !== display) pauseBtn.style.display = display;
+  }
+
+  // 結果画面のシェアボタン: ゲームオーバー中だけ表示し、押すとXの投稿画面を新しいタブで開く
+  const shareBtn = document.getElementById("shareBtn");
+  shareBtn.addEventListener("click", () => {
+    const text = `命のバトン恐竜ラン(仮)で${generationLog.length}世代・${Math.floor(distanceMeters)}m 命をつないだ!`;
+    const params = new URLSearchParams({ text, hashtags: CONFIG.share.hashtags });
+    window.open(`https://twitter.com/intent/tweet?${params.toString()}`, "_blank", "noopener");
+  });
+  function syncShareButton() {
+    const display = gameOver ? "block" : "none";
+    if (shareBtn.style.display !== display) shareBtn.style.display = display;
   }
 
   // 操作: PC(↑/スペース=ジャンプ、↓=しゃがみ/急降下、←→=左右移動)とスマホ(タップ=ジャンプ、スワイプ=上下左右)

@@ -329,4 +329,10 @@ const CONFIG = {
     panelBorderColor: "#000000",
     retryBlinkIntervalFrames: 20, // リトライ操作を受け付け始めたら、この周期で案内文を点滅させる
   },
+
+  // 結果画面の「Xでシェア」ボタン。押すとX(旧Twitter)の投稿画面を新しいタブで開く
+  // (本文には世代数・通算距離を毎回埋め込む。文言はgame.js側で組み立てる)
+  share: {
+    hashtags: "命のバトン恐竜ラン",
+  },
 };

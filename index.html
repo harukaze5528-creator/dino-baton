@@ -16,6 +16,7 @@
     padding: 0;
     background: #eeeeee;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
@@ -44,6 +45,16 @@
     cursor: pointer;
     display: none; /* ゲームプレイ中だけgame.jsが表示する */
   }
+  #shareBtn {
+    display: none; /* 結果画面(ゲームオーバー中)だけgame.jsが表示する */
+    margin: 10px auto 0;
+    padding: 6px 16px;
+    font: 14px "NegaTape", monospace;
+    line-height: 1;
+    background: #ffffff;
+    border: 1px solid #333333;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -51,6 +62,7 @@
   <canvas id="game"></canvas>
   <button id="pauseBtn" aria-label="pause">||</button>
 </div>
+<button id="shareBtn">Xでシェア</button>
 <script src="config.js"></script>
 <script src="game.js"></script>
 </body>
