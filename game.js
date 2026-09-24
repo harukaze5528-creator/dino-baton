@@ -26,6 +26,7 @@
   let screen = "title"; // "title" | "playing" (ゲームオーバーはscreen="playing"のままgameOverフラグで表す)
   let paused = false;
   let resultBlinkCounter; // 結果画面でリトライ案内を点滅させるためのカウンタ
+  let titleBlinkCounter = 0; // タイトル画面で開始案内を点滅させるためのカウンタ
   let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
   let groundScrollX; // 地面模様(groundSprite)のスクロール位置(px)
   let lastParent; // 直近の産卵で残った親(次の世代が孵化した瞬間、骨の姿に切り替える対象)
@@ -1071,8 +1072,11 @@
     ctx.font = "16px 'NegaTape', monospace";
     ctx.fillText(t.subtitle, centerX, centerY - 4);
 
-    ctx.font = "15px 'NegaTape', monospace";
-    ctx.fillText(t.startPrompt, centerX, centerY + 40);
+    const blinkVisible = Math.floor(titleBlinkCounter / t.startPromptBlinkIntervalFrames) % 2 === 0;
+    if (blinkVisible) {
+      ctx.font = "15px 'NegaTape', monospace";
+      ctx.fillText(t.startPrompt, centerX, centerY + 40);
+    }
   }
 
   // 一時停止中のオーバーレイ: ゲーム画面はそのまま見えるように、薄く覆うだけにする。
@@ -1093,6 +1097,7 @@
   }
 
   function loop() {
+    if (screen === "title") titleBlinkCounter++;
     if (screen === "playing" && !paused) update();
     draw();
     syncPauseButton();

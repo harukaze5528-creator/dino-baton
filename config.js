@@ -326,6 +326,7 @@ const CONFIG = {
     title: "LIFE'S BATON",
     subtitle: "DINOSAUR RUN",
     startPrompt: "TAP / CLICK / SPACE TO START",
+    startPromptBlinkIntervalFrames: 30, // 開始案内を点滅させる周期(この値ごとに表示/非表示が切り替わる)
     dimColor: "rgba(255,255,255,0.75)", // タイトル文字の背後を薄く白で覆って読みやすくする
   },
 
