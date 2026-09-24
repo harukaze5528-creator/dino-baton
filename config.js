@@ -187,7 +187,7 @@ const CONFIG = {
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       foodSprite: "assets/berry.png", // 木の実(ニワトリ世代だけ見た目を変える)
       obstacleVisuals: {
-        spike: { color: "#4a4a4a", width: 26, height: 26, sprite: "assets/building.png" }, // ビル
+        spike: { color: "#4a4a4a", width: 25, height: 28, sprite: "assets/cone.png" }, // コーン
         // pit(地面の障害物)は針の代わりに車、flyer(頭上の障害物・群れ)はプテラの代わりに
         // 飛行機にする。flyerはspriteFrames(2枚アニメーション)ではなく静止画1枚なので、
         // 汎用側のspriteFramesを打ち消すためnullを明示している
