@@ -204,9 +204,19 @@ const CONFIG = {
   // sprite/spriteFramesを指定すると、colorの塗りつぶし矩形の代わりにドット絵を描画する
   // (spriteFramesは[フレーム1, フレーム2]で、走りアニメーションと同じ周期で交互に切り替わる)
   obstacleKinds: [
-    { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a" },
+    { id: "platform", behavior: "platform", unlockGeneration: 1, weight: 1, width: 26, height: 14, color: "#8a6a3a", sprite: "assets/platform.png" },
     { id: "spike", behavior: "jumpable", unlockGeneration: 2, weight: 1.4, width: 16, height: 24, color: "#555555" },
-    { id: "boulder", behavior: "chaser", unlockGeneration: 3, weight: 0.8, width: 22, height: 22, color: "#6a6a6a", approachSpeedMultiplier: 1.5 },
+    {
+      id: "boulder",
+      behavior: "chaser",
+      unlockGeneration: 3,
+      weight: 0.8,
+      width: 22,
+      height: 22,
+      color: "#6a6a6a",
+      approachSpeedMultiplier: 1.5,
+      spriteFrames: ["assets/boulder1.png", "assets/boulder2.png"], // 転がって見えるよう交互に切り替える
+    },
     {
       id: "flyer",
       behavior: "overhead",
