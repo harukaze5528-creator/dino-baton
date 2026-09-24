@@ -294,6 +294,7 @@
       layTargetSpeed: 0,
       layResult: null, // 停止中に画面中央へ表示する { generation, distance }
       isMeteor: false, // このholdの後に隕石イベントを挟むか
+      meteorKind: null, // "dinosaurExtinction"なら1回目(恐竜時代の終わり)の隕石。見た目の上書きに使う
       input: { up: false, down: false, left: false, right: false }, // キーボード/マウスの押しっぱなし状態
       jumping: false,
       jumpHoldFrames: 0,
@@ -541,11 +542,14 @@
     player.vy = 0;
     player.onGround = true;
 
-    // 隕石イベントは2箇所: ティラノサウルス(種0)の最後の世代の終わり、
+    // 隕石イベントは2箇所: ティラノサウルス(種0)の最後の世代の終わり(恐竜時代の終わり)、
     // フォルスラコス(最後から2番目の種)の最後の世代の終わり(→現代のニワトリへ)
     const newSpeciesIndex = speciesIndexForGeneration(player.generation);
     const lastIndex = CONFIG.species.length - 1;
-    player.isMeteor = (oldSpeciesIndex === 0 && newSpeciesIndex === 1) || (oldSpeciesIndex === lastIndex - 1 && newSpeciesIndex === lastIndex);
+    const isDinosaurExtinction = oldSpeciesIndex === 0 && newSpeciesIndex === 1;
+    const isModernMeteor = oldSpeciesIndex === lastIndex - 1 && newSpeciesIndex === lastIndex;
+    player.isMeteor = isDinosaurExtinction || isModernMeteor;
+    player.meteorKind = isDinosaurExtinction ? "dinosaurExtinction" : null;
 
     player.state = "laying";
     player.layPhase = "decel";
@@ -894,13 +898,17 @@
     // 隕石イベント: 右上から隕石が落ちてきて、着弾すると画面が閃光に包まれる
     if (player.state === "laying" && player.layPhase === "meteor") {
       const m = CONFIG.meteorEvent;
+      const sizeOverride = player.meteorKind && m[player.meteorKind];
+      const meteorWidth = (sizeOverride && sizeOverride.width) || m.width;
+      const meteorHeight = (sizeOverride && sizeOverride.height) || m.height;
       const elapsed = m.fallFrames + m.flashFrames - player.layPhaseTimer;
       if (elapsed < m.fallFrames) {
         const t = elapsed / m.fallFrames;
-        const startX = CONFIG.canvasWidth - 40;
+        const startX = CONFIG.canvasWidth - meteorWidth;
         const startY = 0;
-        const endX = CONFIG.canvasWidth / 2;
-        const endY = groundY;
+        // 隕石の中心(左上基準ではなく実際の見た目の中心)が画面中央・地面の高さに来るようにする
+        const endX = CONFIG.canvasWidth / 2 - meteorWidth / 2;
+        const endY = groundY - meteorHeight;
         const meteorX = startX + (endX - startX) * t;
         const meteorY = startY + (endY - startY) * t;
         // player.state が "laying" の間は runAnimFrameCounter が進まないため、
@@ -909,10 +917,10 @@
         const meteorFrame = meteorSpriteFrames[meteorFrameIndex] || meteorSpriteFrames[0];
         const meteorImg = meteorFrame && meteorFrame.img;
         if (meteorImg) {
-          ctx.drawImage(meteorImg, meteorX, meteorY, m.width, m.height);
+          ctx.drawImage(meteorImg, meteorX, meteorY, meteorWidth, meteorHeight);
         } else {
           ctx.fillStyle = m.color;
-          ctx.fillRect(meteorX, meteorY, m.width, m.height);
+          ctx.fillRect(meteorX, meteorY, meteorWidth, meteorHeight);
         }
       } else {
         ctx.fillStyle = m.flashColor;
