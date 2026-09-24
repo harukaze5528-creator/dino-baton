@@ -51,17 +51,21 @@
   // 鳴っても前の再生を止めずに重ねられるようにするため)。ブラウザの自動再生制限で
   // 最初のユーザー操作より前の再生に失敗しても無視する(キー入力等で以後は再生できる)
   const soundElements = {};
+  function soundVolume(key) {
+    const overrides = CONFIG.sounds.volumes || {};
+    return key in overrides ? overrides[key] : CONFIG.sounds.volume;
+  }
   Object.keys(CONFIG.sounds).forEach((key) => {
-    if (key === "volume") return;
+    if (key === "volume" || key === "volumes") return;
     const audio = new Audio(CONFIG.sounds[key]);
-    audio.volume = CONFIG.sounds.volume;
+    audio.volume = soundVolume(key);
     soundElements[key] = audio;
   });
   function playSound(key) {
     const base = soundElements[key];
     if (!base) return;
     const instance = base.cloneNode();
-    instance.volume = CONFIG.sounds.volume;
+    instance.volume = soundVolume(key);
     instance.play().catch(() => {});
   }
 
@@ -627,6 +631,7 @@
           const m = CONFIG.meteorEvent;
           player.layPhase = "meteor";
           player.layPhaseTimer = m.fallFrames + m.flashFrames;
+          playSound("meteor");
         } else {
           finishHold();
         }
