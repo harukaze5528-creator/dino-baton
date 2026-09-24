@@ -282,8 +282,8 @@ const CONFIG = {
     color: "#3a1a0a", // 隕石本体の色(sprite未読み込み時のフォールバックにも使う)
     flashColor: "#fff3d0", // 着弾時に画面全体を覆う閃光の色
     spriteFrames: ["assets/meteor1.png", "assets/meteor2.png"], // 炎が揺れて見えるよう交互に切り替える
-    width: 64, // 隕石の表示サイズ(元画像の横長な比率に合わせている)
-    height: 48,
+    width: 100, // 隕石の表示サイズ(元画像の横長な比率に合わせている)
+    height: 75,
   },
 
   // エサ
