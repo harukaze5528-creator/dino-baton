@@ -151,7 +151,7 @@ const CONFIG = {
       yearsAgoEnd: 66000000,
       skeletonSprite: "assets/tyrannosaurus-skeleton.png", // 次の世代が生まれた瞬間、親をこの骨の姿に切り替える
       obstacleVisuals: {
-        spike: { color: "#4a6a2a", width: 18, height: 36, sprite: "assets/cactus.png" }, // トゲのある植物→サボテンの絵を流用
+        spike: { color: "#4a6a2a", width: 18, height: 36, sprite: "assets/vine.png" }, // 地面から伸びるツタ
       },
     },
     {
@@ -166,7 +166,7 @@ const CONFIG = {
       runSprite: ["assets/asteriornis-run1.png", "assets/asteriornis-run2.png"],
       skeletonSprite: "assets/asteriornis-skeleton.png",
       obstacleVisuals: {
-        spike: { color: "#7a6a52", width: 21, height: 29, sprite: "assets/cactus.png" }, // 枯れた棘の茂み→サボテンの絵を流用
+        spike: { color: "#7a6a52", width: 21, height: 29, sprite: "assets/vine.png" }, // 地面から伸びるツタ
       },
     },
     {
@@ -181,7 +181,7 @@ const CONFIG = {
       runSprite: ["assets/gastornis-run1.png", "assets/gastornis-run2.png"],
       skeletonSprite: "assets/gastornis-skeleton.png",
       obstacleVisuals: {
-        spike: { color: "#3a5a2a", width: 18, height: 36, sprite: "assets/cactus.png" }, // トゲの茂み→サボテンの絵を流用
+        spike: { color: "#3a5a2a", width: 18, height: 36, sprite: "assets/vine.png" }, // 地面から伸びるツタ
       },
     },
     {
