@@ -127,6 +127,7 @@ const CONFIG = {
       speedMultiplier: 0.95,
       yearsAgoStart: 68000000,
       yearsAgoEnd: 66000000,
+      skeletonSprite: "assets/tyrannosaurus-skeleton.png", // 次の世代が生まれた瞬間、親をこの骨の姿に切り替える
       obstacleVisuals: {
         spike: { color: "#4a6a2a", width: 18, height: 36, sprite: "assets/cactus.png" }, // トゲのある植物→サボテンの絵を流用
       },
@@ -141,6 +142,7 @@ const CONFIG = {
       yearsAgoEnd: 60000000,
       sprite: "assets/asteriornis.png",
       runSprite: ["assets/asteriornis-run1.png", "assets/asteriornis-run2.png"],
+      skeletonSprite: "assets/asteriornis-skeleton.png",
       obstacleVisuals: {
         spike: { color: "#7a6a52", width: 21, height: 29, sprite: "assets/cactus.png" }, // 枯れた棘の茂み→サボテンの絵を流用
       },
@@ -155,6 +157,7 @@ const CONFIG = {
       yearsAgoEnd: 40000000,
       sprite: "assets/gastornis.png",
       runSprite: ["assets/gastornis-run1.png", "assets/gastornis-run2.png"],
+      skeletonSprite: "assets/gastornis-skeleton.png",
       obstacleVisuals: {
         spike: { color: "#3a5a2a", width: 18, height: 36, sprite: "assets/cactus.png" }, // トゲの茂み→サボテンの絵を流用
       },
@@ -169,6 +172,7 @@ const CONFIG = {
       yearsAgoEnd: 2000000,
       sprite: "assets/phorusrhacos.png",
       runSprite: ["assets/phorusrhacos-run1.png", "assets/phorusrhacos-run2.png"],
+      skeletonSprite: "assets/phorusrhacos-skeleton.png",
       obstacleVisuals: {
         spike: { color: "#a68a4a", width: 21, height: 26, sprite: "assets/cactus.png" }, // 乾いた棘の茂み→サボテンの絵を流用
       },
@@ -186,6 +190,7 @@ const CONFIG = {
       chickSprite: "assets/chicken-chick.png",
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       foodSprite: "assets/berry.png", // 木の実(ニワトリ世代だけ見た目を変える)
+      skeletonSprite: "assets/chicken-skeleton.png",
       obstacleVisuals: {
         spike: { color: "#4a4a4a", width: 25, height: 28, sprite: "assets/cone.png" }, // コーン
         // pit(地面の障害物)は針の代わりに車、flyer(頭上の障害物・群れ)はプテラの代わりに

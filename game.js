@@ -25,6 +25,7 @@
   let retryCooldown; // ゲームオーバー直後、リトライ入力を受け付けない猶予フレーム数(誤操作での即リトライを防ぐ)
   let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
   let groundScrollX; // 地面模様(groundSprite)のスクロール位置(px)
+  let lastParent; // 直近の産卵で残った親(次の世代が孵化した瞬間、骨の姿に切り替える対象)
 
   // 障害物用のドット絵を読み込んで使い回すキャッシュ(パス文字列 → { img })。
   // imgはロード完了までnullなので、参照した時点でまだ読み込み中でも壊れない
@@ -97,6 +98,7 @@
   const speciesSprites = loadSpeciesSpriteMap("sprite");
   const speciesChickSprites = loadSpeciesSpriteMap("chickSprite");
   const speciesFoodSprites = loadSpeciesSpriteMap("foodSprite");
+  const speciesSkeletonSprites = loadSpeciesSpriteMap("skeletonSprite");
 
   // 種専用の走りアニメーション([フレーム1, フレーム2]の2枚)。指定がない種はnullのままになる
   function loadSpeciesRunSpriteMap(fieldName) {
@@ -319,6 +321,7 @@
     retryCooldown = 0;
     runAnimFrameCounter = 0;
     groundScrollX = 0;
+    lastParent = null;
   }
 
   // 走りアニメーション(run1.png/run2.png)のうち今どちらを表示するか(0か1)
@@ -527,15 +530,19 @@
     // 産卵演出を開始: 親をその場に残し、プレイヤーは卵に切り替わる(孵化はholdフェーズの終わりで起きる)
     const oldSpeciesIndex = speciesIndexForGeneration(player.generation);
 
-    parents.push({
+    const newParent = {
       x: player.x,
       y: player.y,
       width: player.width,
       height: player.height,
       color: currentColor(),
       sprite: spriteFor(CONFIG.stages.length - 1, currentSpecies(), currentRunFrameIndex()), // 産卵時点(旧世代)の種の見た目を固定で使う
+      skeletonSprite: speciesSkeletonSprites[currentSpecies().name], // 次の世代が孵化した瞬間、これに切り替える
+      isSkeleton: false,
       pulseFrames: CONFIG.layPulse.frames, // 産んだ直後、一瞬つぶれてから元に戻る演出用
-    });
+    };
+    parents.push(newParent);
+    lastParent = newParent; // 孵化のタイミングでこの親だけ骨の姿にする
 
     player.layResult = recordGeneration();
     player.generation++;
@@ -564,6 +571,11 @@
   // hold(世代結果の表示)が終わったときの共通処理: 孵化して次の速度まで加速再開する
   function finishHold() {
     hatch();
+    // 次の世代が生まれた瞬間、残っている親を骨の姿に切り替える(命のバトンが渡った印)
+    if (lastParent) {
+      lastParent.isSkeleton = true;
+      lastParent = null;
+    }
     player.layTargetSpeed = genBaseSpeed(player.generation) * CONFIG.stages[1].speedMultiplier * currentSpecies().speedMultiplier;
     player.layPhase = "accel";
     player.layPhaseTimer = CONFIG.layAnimation.accelFrames;
@@ -821,7 +833,8 @@
         h = p.height * squash;
         y = p.y + (p.height - h); // 足元の位置は揃えたまま高さだけつぶす
       }
-      drawCharacter(p.sprite, p.x, y, p.width, h, p.color);
+      const sprite = (p.isSkeleton && p.skeletonSprite) || p.sprite;
+      drawCharacter(sprite, p.x, y, p.width, h, p.color);
     });
 
     // プレイヤー(無敵中は点滅。しゃがみ中は低い矩形になる。孵化直前は点滅する)
