@@ -1083,6 +1083,13 @@
   // タイトル画面での最初の操作でゲームを始める
   function startGame() {
     screen = "playing";
+    playSound("confirm");
+  }
+
+  // リトライ操作: ゲームをリセットしてから、決定音を鳴らす
+  function retryGame() {
+    reset();
+    playSound("confirm");
   }
 
   // 一時停止ボタン: プレイ中(ゲームオーバーでない)時だけ表示し、押すたびに一時停止/再開を切り替える
@@ -1117,7 +1124,7 @@
       return;
     }
     if (gameOver) {
-      if (retryCooldown <= 0) reset();
+      if (retryCooldown <= 0) retryGame();
       return;
     }
     if (paused) return;
@@ -1135,7 +1142,7 @@
       return;
     }
     if (gameOver) {
-      if (retryCooldown <= 0) reset();
+      if (retryCooldown <= 0) retryGame();
       return;
     }
     if (paused) return;
@@ -1156,7 +1163,7 @@
         return;
       }
       if (gameOver) {
-        if (retryCooldown <= 0) reset();
+        if (retryCooldown <= 0) retryGame();
         touchStart = null;
         return;
       }

@@ -25,9 +25,10 @@ const CONFIG = {
     lay: "assets/lay.mp3", // 大人が産卵を始めた瞬間
     pause: "assets/pause.mp3", // 一時停止ボタンを押した瞬間(再開時も鳴らす)
     boulder: "assets/boulder.mp3", // 後ろから転がってくる岩が出現した瞬間
+    confirm: "assets/confirm.mp3", // タイトルでスタート、結果画面でリトライを押した瞬間
   },
 
-  // BGM: プレイ中(タイトル・一時停止・結果画面を除く)だけループ再生する
+  // BGM: タイトル画面も含めてループ再生し、一時停止中・結果画面だけ止める
   bgm: {
     src: "assets/bgm.mp3",
     volume: 0.18, // 効果音より控えめにする
