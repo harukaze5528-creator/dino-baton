@@ -459,6 +459,7 @@
     if (kind.behavior === "chaser") {
       x = -width; // 画面左の外側から後ろを追ってくる
       y = groundY - height;
+      playSound("boulder");
     } else if (kind.behavior === "overhead") {
       x = CONFIG.canvasWidth;
       y = groundY - kind.heightAboveGround - height; // 地面から少し浮いた高さ

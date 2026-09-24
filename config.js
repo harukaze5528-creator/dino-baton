@@ -24,6 +24,7 @@ const CONFIG = {
     hatch: "assets/hatch.m4a", // 卵からヒナが孵った瞬間
     lay: "assets/lay.mp3", // 大人が産卵を始めた瞬間
     pause: "assets/pause.mp3", // 一時停止ボタンを押した瞬間(再開時も鳴らす)
+    boulder: "assets/boulder.mp3", // 後ろから転がってくる岩が出現した瞬間
   },
 
   // 空を流れる雲。種によらず共通
