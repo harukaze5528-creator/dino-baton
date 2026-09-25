@@ -1102,6 +1102,7 @@
     draw();
     syncPauseButton();
     syncShareButton();
+    syncTouchControls();
     syncBgm();
     requestAnimationFrame(loop);
   }
@@ -1145,6 +1146,39 @@
       shareBtn.style.display = display;
       fitToScreen(); // シェアボタンの表示/非表示で#gameRootの高さが変わるので倍率を計算し直す
     }
+  }
+
+  // タッチ操作用の方向ボタン(左端:左右移動、右端:ジャンプ/しゃがみ)。
+  // タッチ操作端末で、実際にプレイ中(ゲームオーバーでない)時だけ表示する
+  const dirButtons = {
+    left: document.getElementById("btnLeft"),
+    right: document.getElementById("btnRight"),
+    up: document.getElementById("btnUp"),
+    down: document.getElementById("btnDown"),
+  };
+  Object.keys(dirButtons).forEach((direction) => {
+    const btn = dirButtons[direction];
+    const press = (e) => {
+      e.preventDefault();
+      if (screen !== "playing" || gameOver || paused) return;
+      btn.classList.add("pressed");
+      player.input[direction] = true;
+    };
+    const release = (e) => {
+      e.preventDefault();
+      btn.classList.remove("pressed");
+      player.input[direction] = false;
+    };
+    btn.addEventListener("pointerdown", press);
+    btn.addEventListener("pointerup", release);
+    btn.addEventListener("pointercancel", release);
+    btn.addEventListener("pointerleave", release);
+  });
+  function syncTouchControls() {
+    const display = isTouchDevice && screen === "playing" && !gameOver ? "block" : "none";
+    Object.values(dirButtons).forEach((btn) => {
+      if (btn.style.display !== display) btn.style.display = display;
+    });
   }
 
   // 操作: PC(↑/スペース=ジャンプ、↓=しゃがみ/急降下、←→=左右移動)とスマホ(タップ=ジャンプ、スワイプ=上下左右)

@@ -62,6 +62,25 @@
     border: 1px solid #333333;
     cursor: pointer;
   }
+  /* タッチ操作用の方向ボタン: 左端中央に左右移動、右端中央に上下(ジャンプ/しゃがみ) */
+  .dirBtn {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background: url("assets/button.png") no-repeat center / contain;
+    opacity: 0.85;
+    touch-action: none;
+    display: none; /* タッチ操作端末でプレイ中だけgame.jsが表示する */
+  }
+  .dirBtn.pressed {
+    background-image: url("assets/button-pressed.png");
+  }
+  #btnLeft { left: 12px; top: 130px; transform: rotate(-90deg); }
+  #btnRight { left: 64px; top: 130px; transform: rotate(90deg); }
+  #btnUp { right: 12px; top: 104px; }
+  #btnDown { right: 12px; top: 156px; transform: rotate(180deg); }
 </style>
 </head>
 <body>
@@ -69,6 +88,10 @@
   <div class="game-wrap">
     <canvas id="game"></canvas>
     <button id="pauseBtn" aria-label="pause">||</button>
+    <button id="btnLeft" class="dirBtn" aria-label="left"></button>
+    <button id="btnRight" class="dirBtn" aria-label="right"></button>
+    <button id="btnUp" class="dirBtn" aria-label="up"></button>
+    <button id="btnDown" class="dirBtn" aria-label="down"></button>
   </div>
   <button id="shareBtn">Xでシェア</button>
 </div>
