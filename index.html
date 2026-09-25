@@ -53,8 +53,9 @@
     display: none; /* ゲームプレイ中だけgame.jsが表示する */
   }
   #shareBtn {
-    display: none; /* 結果画面(ゲームオーバー中)だけgame.jsが表示する */
-    margin: 10px auto 0;
+    position: absolute;
+    left: 540px;
+    top: 40px;
     width: 30px;
     height: 30px;
     padding: 0;
@@ -63,6 +64,7 @@
     background: #ffffff;
     border: 1px solid #333333;
     cursor: pointer;
+    display: none; /* 結果画面(ゲームオーバー中)だけgame.jsが表示する */
   }
   /* タッチ操作用の方向ボタン: 左端中央に左右移動、右端中央に上下(ジャンプ/しゃがみ) */
   .dirBtn {
@@ -94,8 +96,8 @@
     <button id="btnRight" class="dirBtn" aria-label="right"></button>
     <button id="btnUp" class="dirBtn" aria-label="up"></button>
     <button id="btnDown" class="dirBtn" aria-label="down"></button>
+    <button id="shareBtn" aria-label="share to X">X</button>
   </div>
-  <button id="shareBtn" aria-label="share to X">X</button>
 </div>
 <script src="config.js"></script>
 <script src="game.js"></script>

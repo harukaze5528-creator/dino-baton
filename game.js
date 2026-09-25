@@ -1281,10 +1281,7 @@
   });
   function syncShareButton() {
     const display = gameOver ? "block" : "none";
-    if (shareBtn.style.display !== display) {
-      shareBtn.style.display = display;
-      fitToScreen(); // シェアボタンの表示/非表示で#gameRootの高さが変わるので倍率を計算し直す
-    }
+    if (shareBtn.style.display !== display) shareBtn.style.display = display;
   }
 
   // タッチ操作用の方向ボタン(左端:左右移動、右端:ジャンプ/しゃがみ)。
