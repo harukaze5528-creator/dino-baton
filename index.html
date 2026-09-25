@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>命のバトン恐竜ラン(仮) - プロトタイプ</title>
 <style>
   @font-face {
@@ -20,6 +20,13 @@
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    overflow: hidden; /* 画面に収まるよう縮小表示するので、はみ出し分のスクロールは出さない */
+  }
+  #gameRoot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: center center;
   }
   canvas {
     background: #ffffff;
@@ -58,11 +65,13 @@
 </style>
 </head>
 <body>
-<div class="game-wrap">
-  <canvas id="game"></canvas>
-  <button id="pauseBtn" aria-label="pause">||</button>
+<div id="gameRoot">
+  <div class="game-wrap">
+    <canvas id="game"></canvas>
+    <button id="pauseBtn" aria-label="pause">||</button>
+  </div>
+  <button id="shareBtn">Xでシェア</button>
 </div>
-<button id="shareBtn">Xでシェア</button>
 <script src="config.js"></script>
 <script src="game.js"></script>
 </body>

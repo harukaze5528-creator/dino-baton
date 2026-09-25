@@ -8,6 +8,23 @@
   // 補間ありだと縮小時ににじんで輪郭が荒く見えるが、切るとくっきりしたドット絵らしい見た目になる
   ctx.imageSmoothingEnabled = false;
 
+  // 画面(特にスマホの横画面)に収まらない時だけ、キャンバス一式(#gameRoot)をCSSの
+  // transform:scaleで縮小する。offsetWidth/Heightはtransformの影響を受けないので、
+  // 等倍時の実サイズを基準に「画面に収まる倍率」を計算できる。PCなど画面に十分収まる
+  // 場合は1倍のまま(これまで通りの見た目)にし、拡大はしない
+  const gameRoot = document.getElementById("gameRoot");
+  function fitToScreen() {
+    const scale = Math.min(window.innerWidth / gameRoot.offsetWidth, window.innerHeight / gameRoot.offsetHeight, 1);
+    gameRoot.style.transform = `scale(${scale})`;
+  }
+  window.addEventListener("resize", fitToScreen);
+  window.addEventListener("orientationchange", fitToScreen);
+  fitToScreen();
+  if (document.fonts) document.fonts.ready.then(fitToScreen); // フォント読み込み完了でボタン幅が変わる分も反映する
+
+  // タッチ操作端末かどうか(タイトル画面でスワイプ操作の案内を出すかどうかの判定に使う)
+  const isTouchDevice = navigator.maxTouchPoints > 0 || "ontouchstart" in window;
+
   const groundY = CONFIG.canvasHeight - CONFIG.groundHeight;
 
   let player;
@@ -1052,6 +1069,14 @@
       ctx.font = "15px 'NegaTape', monospace";
       ctx.fillText(t.startPrompt, centerX, centerY + 40);
     }
+
+    // タッチ操作端末では、スワイプ操作(左右移動・しゃがみ)の分かりにくさを補うため案内を出す
+    if (isTouchDevice) {
+      ctx.font = "12px 'NegaTape', monospace";
+      t.touchHint.forEach((line, i) => {
+        ctx.fillText(line, centerX, centerY + 70 + i * 16);
+      });
+    }
   }
 
   // 一時停止中のオーバーレイ: ゲーム画面はそのまま見えるように、薄く覆うだけにする。
@@ -1116,7 +1141,10 @@
   });
   function syncShareButton() {
     const display = gameOver ? "block" : "none";
-    if (shareBtn.style.display !== display) shareBtn.style.display = display;
+    if (shareBtn.style.display !== display) {
+      shareBtn.style.display = display;
+      fitToScreen(); // シェアボタンの表示/非表示で#gameRootの高さが変わるので倍率を計算し直す
+    }
   }
 
   // 操作: PC(↑/スペース=ジャンプ、↓=しゃがみ/急降下、←→=左右移動)とスマホ(タップ=ジャンプ、スワイプ=上下左右)

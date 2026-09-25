@@ -319,6 +319,8 @@ const CONFIG = {
     subtitle: "DINOSAUR RUN",
     startPrompt: "TAP / CLICK / SPACE TO START",
     startPromptBlinkIntervalFrames: 30, // 開始案内を点滅させる周期(この値ごとに表示/非表示が切り替わる)
+    // タッチ操作端末でだけ表示する操作案内(2行)
+    touchHint: ["TAP OR SWIPE UP: JUMP", "SWIPE DOWN: CROUCH   LEFT/RIGHT: MOVE"],
     dimColor: "rgba(255,255,255,0.75)", // タイトル文字の背後を薄く白で覆って読みやすくする
   },
 
