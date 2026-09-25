@@ -55,8 +55,10 @@
   #shareBtn {
     display: none; /* 結果画面(ゲームオーバー中)だけgame.jsが表示する */
     margin: 10px auto 0;
-    padding: 6px 16px;
-    font: 14px "NegaTape", monospace;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    font: 18px "NegaTape", monospace;
     line-height: 1;
     background: #ffffff;
     border: 1px solid #333333;
@@ -93,7 +95,7 @@
     <button id="btnUp" class="dirBtn" aria-label="up"></button>
     <button id="btnDown" class="dirBtn" aria-label="down"></button>
   </div>
-  <button id="shareBtn">Xでシェア</button>
+  <button id="shareBtn" aria-label="share to X">X</button>
 </div>
 <script src="config.js"></script>
 <script src="game.js"></script>
