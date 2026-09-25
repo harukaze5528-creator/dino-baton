@@ -11,7 +11,8 @@ const CONFIG = {
   // でこぼこ(草や小石の盛り上がり)は当たり判定に関係ない飾りとして扱う
   groundLineRatio: 0.25,
 
-  // 遠景(山・火山)。雲より手前・地面より奥にあるので、その中間の速さでスクロールさせる
+  // 遠景(山・火山)。雲より手前・地面より奥にあるので、その中間の速さでスクロールさせる。
+  // 種ごとにspecies[].backgroundSpriteで上書きできる(ニワトリ世代だけ現代の街並みにしている)
   background: {
     sprite: "assets/background.png",
     parallax: 0.4,
@@ -220,6 +221,7 @@ const CONFIG = {
       chickRunSprite: ["assets/chicken-chick-run1.png", "assets/chicken-chick-run2.png"],
       foodSprite: "assets/berry.png", // 木の実(ニワトリ世代だけ見た目を変える)
       skeletonSprite: "assets/chicken-skeleton.png",
+      backgroundSprite: "assets/background-modern.png", // 遠景(ニワトリ世代だけ現代の街並みにする)
       obstacleVisuals: {
         spike: { color: "#4a4a4a", width: 25, height: 28, sprite: "assets/cone.png" }, // コーン
         // pit(地面の障害物)は針の代わりに車、flyer(頭上の障害物・群れ)はプテラの代わりに

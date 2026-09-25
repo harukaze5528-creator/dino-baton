@@ -107,8 +107,15 @@
   // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
   const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
 
-  // 遠景(山・火山)。地面よりゆっくりスクロールさせて奥行きを出す
-  const backgroundSpriteEntry = getOrLoadImage(CONFIG.background.sprite);
+  // 遠景(山・火山、ニワトリ世代だけ現代の街並み)。地面よりゆっくりスクロールさせて奥行きを出す。
+  // 種ごとの絵はspecies[].backgroundSpriteで上書きできる(なければ共通のCONFIG.background.sprite)
+  const backgroundSpriteEntries = { default: getOrLoadImage(CONFIG.background.sprite) };
+  CONFIG.species.forEach((s) => {
+    if (s.backgroundSprite) backgroundSpriteEntries[s.name] = getOrLoadImage(s.backgroundSprite);
+  });
+  function currentBackgroundSprite() {
+    return backgroundSpriteEntries[currentSpecies().name] || backgroundSpriteEntries.default;
+  }
 
   // エサ(木の実)のドット絵
   const foodSpriteEntry = getOrLoadImage(CONFIG.food.sprite);
@@ -878,12 +885,14 @@
   function draw() {
     ctx.clearRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
-    // 背景(全種共通。種の違いは装飾・障害物の見た目だけで表現する)
+    // 背景(空の色は全種共通。遠景の絵だけ種によって変える)
     ctx.fillStyle = CONFIG.skyColor;
     ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
-    // 遠景(山・火山)。地面の高さまでを覆うように表示し、横につなげてスクロールさせる
-    const bgImg = backgroundSpriteEntry && backgroundSpriteEntry.img;
+    // 遠景(山・火山、ニワトリ世代だけ現代の街並み)。地面の高さまでを覆うように表示し、
+    // 横につなげてスクロールさせる
+    const bgEntry = currentBackgroundSprite();
+    const bgImg = bgEntry && bgEntry.img;
     if (bgImg) {
       const bgHeight = groundY;
       const bgWidth = bgImg.naturalWidth * (bgHeight / bgImg.naturalHeight);
