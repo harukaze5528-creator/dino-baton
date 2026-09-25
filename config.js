@@ -221,6 +221,8 @@ const CONFIG = {
         // 汎用側のspriteFramesを打ち消すためnullを明示している
         pit: { color: "#4a4a4a", width: 36, height: 17, sprite: "assets/car.png" }, // 車
         flyer: { color: "#4a4a4a", width: 34, height: 14, sprite: "assets/airplane.png", spriteFrames: null }, // 飛行機
+        // 後ろから追いついてくる岩(boulder)は、ニワトリ世代だけブルドーザーの見た目にする
+        boulder: { color: "#4a4a4a", width: 38, height: 22, spriteFrames: ["assets/bulldozer1.png", "assets/bulldozer2.png"] },
       },
     },
   ],
