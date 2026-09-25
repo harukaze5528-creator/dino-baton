@@ -154,6 +154,8 @@
 5. 調整:難易度カーブ、テストプレイ
 6. 見た目と音:ドット絵、効果音、BGM、孵化・産卵演出、結果画面、Xへのシェアボタン
 7. 公開:GitHub Pages / itch.io
+   - GitHub Pagesで公開済み: https://harukaze5528-creator.github.io/dino-baton/
+     (リポジトリ: https://github.com/harukaze5528-creator/dino-baton 、masterブランチのルートから配信)
 
 ## 作業の進め方
 - 一度に大きく作らず、小さな単位で実装して動作確認する
