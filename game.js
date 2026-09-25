@@ -67,24 +67,34 @@
     return entry;
   }
 
-  // 効果音: あらかじめ読み込んでおき、鳴らすたびに複製して再生する(短時間に連続で
-  // 鳴っても前の再生を止めずに重ねられるようにするため)。ブラウザの自動再生制限で
-  // 最初のユーザー操作より前の再生に失敗しても無視する(キー入力等で以後は再生できる)
-  const soundElements = {};
+  // 効果音: キーごとに複数のAudioをあらかじめ読み込んでおき(プール)、鳴らすたびに
+  // 順番に使い回す。毎回cloneNode()すると複製のたびに再デコードが走って発音が遅れる
+  // ことがあるため、あらかじめ読み込み済みのインスタンスを使い回して遅延を減らしている。
+  // 短時間に連続で鳴っても前の再生を止めずに重ねられ、file://でも問題なく動く。
+  // ブラウザの自動再生制限で最初のユーザー操作より前の再生に失敗しても無視する
+  const SOUND_POOL_SIZE = 4;
+  const soundPools = {};
   function soundVolume(key) {
     const overrides = CONFIG.sounds.volumes || {};
     return key in overrides ? overrides[key] : CONFIG.sounds.volume;
   }
   Object.keys(CONFIG.sounds).forEach((key) => {
     if (key === "volume" || key === "volumes") return;
-    const audio = new Audio(CONFIG.sounds[key]);
-    audio.volume = soundVolume(key);
-    soundElements[key] = audio;
+    const instances = [];
+    for (let i = 0; i < SOUND_POOL_SIZE; i++) {
+      const audio = new Audio(CONFIG.sounds[key]);
+      audio.preload = "auto";
+      audio.volume = soundVolume(key);
+      instances.push(audio);
+    }
+    soundPools[key] = { instances, next: 0 };
   });
   function playSound(key) {
-    const base = soundElements[key];
-    if (!base) return;
-    const instance = base.cloneNode();
+    const pool = soundPools[key];
+    if (!pool) return;
+    const instance = pool.instances[pool.next];
+    pool.next = (pool.next + 1) % pool.instances.length;
+    instance.currentTime = 0;
     instance.volume = soundVolume(key);
     instance.play().catch(() => {});
   }
@@ -1225,7 +1235,33 @@
   shareBtn.addEventListener("click", () => {
     const text = `命のバトン恐竜ラン(仮)で${generationLog.length}世代・${Math.floor(distanceMeters)}m 命をつないだ!`;
     const params = new URLSearchParams({ text, hashtags: CONFIG.share.hashtags });
-    window.open(`https://twitter.com/intent/tweet?${params.toString()}`, "_blank", "noopener");
+    const tweetUrl = `https://twitter.com/intent/tweet?${params.toString()}`;
+
+    // 結果画面(キャンバス)を画像化して一緒に共有する。Xの投稿画面URLには画像を
+    // 直接渡せないため、対応端末ではWeb Share APIで画像付きのまま共有シートを開き、
+    // 非対応環境では画像をダウンロードしつつテキストだけの投稿画面を開く(手動添付用)。
+    // file://で開いている場合はキャンバスが汚染されているためblobがnullになり、
+    // 従来通りテキストのみの投稿画面が開く(エラーにはならない)
+    canvas.toBlob(async (blob) => {
+      const file = blob && new File([blob], "life-baton-result.png", { type: "image/png" });
+
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ text, files: [file] });
+          return;
+        } catch (e) {
+          // 共有をキャンセルした場合などはテキストのみの投稿にフォールバックする
+        }
+      }
+
+      if (file) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(file);
+        a.download = file.name;
+        a.click();
+      }
+      window.open(tweetUrl, "_blank", "noopener");
+    }, "image/png");
   });
   function syncShareButton() {
     const display = gameOver ? "block" : "none";
