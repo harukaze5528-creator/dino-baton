@@ -130,6 +130,22 @@
   // エサ(木の実)のドット絵
   const foodSpriteEntry = getOrLoadImage(CONFIG.food.sprite);
 
+  // 障害物のドット絵(種ごとの上書きも含む全パターン)をここでまとめて先読みしておく。
+  // これまではspawnObstacle()で出現した瞬間に初めてgetOrLoadImage()していたため、その
+  // 種類の障害物が最初に出現した時だけ読み込みが間に合わず、一瞬ただの四角で表示される
+  // ことがあった
+  CONFIG.obstacleKinds.forEach((kind) => {
+    if (kind.sprite) getOrLoadImage(kind.sprite);
+    if (kind.spriteFrames) kind.spriteFrames.forEach(getOrLoadImage);
+  });
+  CONFIG.species.forEach((species) => {
+    if (!species.obstacleVisuals) return;
+    Object.values(species.obstacleVisuals).forEach((visual) => {
+      if (visual.sprite) getOrLoadImage(visual.sprite);
+      if (visual.spriteFrames) visual.spriteFrames.forEach(getOrLoadImage);
+    });
+  });
+
   // プレイヤーのドット絵スプライト(卵・ヒナ。種専用の絵がない場合の共通フォールバック)。
   // assets/配下のPNGはあらかじめ背景を透過処理済み(制作ツール側の白いベタ塗り背景を
   // 透明化してある)。ここではgetImageDataなどのピクセル読み取りは一切行わない。
