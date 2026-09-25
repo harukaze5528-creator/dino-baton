@@ -1069,14 +1069,36 @@
     ctx.lineTo(panelX + panelWidth / 2, panelY + panelHeight - 26);
     ctx.stroke();
 
+    const rowSpacing = 15;
+
     ctx.font = "13px 'NegaTape', monospace";
     ctx.fillStyle = "#000000";
     generationLog.slice(-maxRows).forEach((g, i) => {
-      ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, leftColX, panelY + 166 + i * 13);
+      ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, leftColX, panelY + 166 + i * rowSpacing);
     });
+
+    // 自己ベストは「何世代目の記録か」を大きめの文字で強調し、距離は添え書き程度に小さく添える
+    const genDistGap = 4; // GEN数値と距離の間の見た目の余白(px)
     highScores.slice(0, maxRows).forEach((s, i) => {
-      ctx.fillText(`${i + 1}. ${Math.floor(s.distance)}m`, rightColX, panelY + 166 + i * 13);
+      const y = panelY + 166 + i * rowSpacing;
+      const genText = `GEN ${s.generations}`;
+      const distText = `${Math.floor(s.distance)}m`;
+      ctx.font = "15px 'NegaTape', monospace";
+      const genWidth = ctx.measureText(genText).width;
+      ctx.font = "11px 'NegaTape', monospace";
+      const distWidth = ctx.measureText(distText).width;
+      const startX = rightColX - (genWidth + genDistGap + distWidth) / 2;
+
+      ctx.textAlign = "left";
+      ctx.font = "15px 'NegaTape', monospace";
+      ctx.fillStyle = "#000000";
+      ctx.fillText(genText, startX, y);
+      ctx.font = "11px 'NegaTape', monospace";
+      ctx.fillStyle = "#888888";
+      ctx.fillText(distText, startX + genWidth + genDistGap, y);
+      ctx.textAlign = "center";
     });
+    ctx.fillStyle = "#000000"; // 以降の描画(リトライ案内)に響かないよう戻しておく
 
     // リトライ操作を受け付け始めたら(retryCooldown経過後)、案内文を点滅させて目立たせる
     const blinkVisible = retryCooldown > 0 || Math.floor(resultBlinkCounter / r.retryBlinkIntervalFrames) % 2 === 0;
