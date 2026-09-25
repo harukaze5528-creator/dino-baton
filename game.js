@@ -45,6 +45,7 @@
   let resultBlinkCounter; // 結果画面でリトライ案内を点滅させるためのカウンタ
   let titleBlinkCounter = 0; // タイトル画面で開始案内を点滅させるためのカウンタ
   let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
+  let highScores = loadHighScores(); // 自己ベストの記録(ブラウザのlocalStorageに保存。距離が長い順)
   let groundScrollX; // 地面模様(groundSprite)のスクロール位置(px)
   let lastParent; // 直近の産卵で残った親(次の世代が孵化した瞬間、骨の姿に切り替える対象)
 
@@ -588,6 +589,29 @@
     return entry;
   }
 
+  // 自己ベストの記録: サーバーを持たない静的サイトなので、世界ランキングの代わりに
+  // ブラウザのlocalStorageへ距離が長い順でCONFIG.highScores.maxEntries件だけ保存する
+  function loadHighScores() {
+    try {
+      const raw = localStorage.getItem(CONFIG.highScores.storageKey);
+      const scores = raw ? JSON.parse(raw) : [];
+      return Array.isArray(scores) ? scores : [];
+    } catch (e) {
+      return []; // プライベートモードなどlocalStorageが使えない環境では諦めて空扱いにする
+    }
+  }
+
+  function saveHighScore(distance, generations) {
+    highScores = [...highScores, { distance, generations }]
+      .sort((a, b) => b.distance - a.distance)
+      .slice(0, CONFIG.highScores.maxEntries);
+    try {
+      localStorage.setItem(CONFIG.highScores.storageKey, JSON.stringify(highScores));
+    } catch (e) {
+      // 保存に失敗しても(ストレージ満杯・プライベートモード等)ゲーム進行には影響させない
+    }
+  }
+
   function hatch() {
     player.stageIndex = 1; // ヒナ
     player.foodEaten = 0;
@@ -704,6 +728,7 @@
       retryCooldown = CONFIG.retryCooldownFrames;
       resultBlinkCounter = 0;
       recordGeneration();
+      saveHighScore(distanceMeters, generationLog.length);
       return;
     }
 
@@ -1027,16 +1052,30 @@
     ctx.font = "14px 'NegaTape', monospace";
     ctx.fillText(`${formatDistanceComma(distanceMeters)} TOTAL`, centerX, panelY + 130);
 
+    // 左:今回の直近世代ログ、右:自己ベストランキング(世界ランキングの代わりにlocalStorageで保持)
+    const leftColX = panelX + panelWidth / 4;
+    const rightColX = panelX + (panelWidth * 3) / 4;
+    const maxRows = 5;
+
     ctx.font = "11px 'NegaTape', monospace";
     ctx.fillStyle = "#888888";
-    ctx.fillText("RECENT GENERATIONS", centerX, panelY + 148);
+    ctx.fillText("RECENT GENERATIONS", leftColX, panelY + 148);
+    ctx.fillText("BEST RECORDS", rightColX, panelY + 148);
+
+    ctx.strokeStyle = "#eeeeee";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(panelX + panelWidth / 2, panelY + 156);
+    ctx.lineTo(panelX + panelWidth / 2, panelY + panelHeight - 26);
+    ctx.stroke();
 
     ctx.font = "13px 'NegaTape', monospace";
     ctx.fillStyle = "#000000";
-    const maxRows = 6;
-    const shown = generationLog.slice(-maxRows);
-    shown.forEach((g, i) => {
-      ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, centerX, panelY + 166 + i * 13);
+    generationLog.slice(-maxRows).forEach((g, i) => {
+      ctx.fillText(`GEN ${g.generation}: ${Math.floor(g.distance)}m`, leftColX, panelY + 166 + i * 13);
+    });
+    highScores.slice(0, maxRows).forEach((s, i) => {
+      ctx.fillText(`${i + 1}. ${Math.floor(s.distance)}m`, rightColX, panelY + 166 + i * 13);
     });
 
     // リトライ操作を受け付け始めたら(retryCooldown経過後)、案内文を点滅させて目立たせる

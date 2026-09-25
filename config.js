@@ -337,4 +337,10 @@ const CONFIG = {
   share: {
     hashtags: "命のバトン恐竜ラン",
   },
+
+  // 自己ベストランキング(世界ランキングの代わりに、ブラウザのlocalStorageへ保存する個人記録)
+  highScores: {
+    maxEntries: 5, // 保存しておく件数(距離が長い順)
+    storageKey: "dinoBatonHighScores",
+  },
 };
