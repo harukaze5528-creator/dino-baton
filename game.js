@@ -47,6 +47,7 @@
   let runAnimFrameCounter; // 走りアニメーション(run1.png/run2.png)の経過フレーム数
   let highScores = loadHighScores(); // 自己ベストの記録(ブラウザのlocalStorageに保存。距離が長い順)
   let groundScrollX; // 地面模様(groundSprite)のスクロール位置(px)
+  let backgroundScrollX; // 遠景(background)のスクロール位置(px)
   let lastParent; // 直近の産卵で残った親(次の世代が孵化した瞬間、骨の姿に切り替える対象)
 
   // 障害物用のドット絵を読み込んで使い回すキャッシュ(パス文字列 → { img })。
@@ -105,6 +106,9 @@
 
   // 地面に重ねて描く模様(線とドット)。スクロールに合わせて横に流れる
   const groundSpriteEntry = getOrLoadImage(CONFIG.groundSprite);
+
+  // 遠景(山・火山)。地面よりゆっくりスクロールさせて奥行きを出す
+  const backgroundSpriteEntry = getOrLoadImage(CONFIG.background.sprite);
 
   // エサ(木の実)のドット絵
   const foodSpriteEntry = getOrLoadImage(CONFIG.food.sprite);
@@ -387,6 +391,7 @@
     resultBlinkCounter = 0;
     runAnimFrameCounter = 0;
     groundScrollX = 0;
+    backgroundScrollX = 0;
     lastParent = null;
     bgm.currentTime = 0; // リトライ時もBGMを最初から鳴らし直す
   }
@@ -756,6 +761,7 @@
     }
     distanceMeters += currentSpeed * CONFIG.metersPerFrame;
     groundScrollX += currentSpeed;
+    backgroundScrollX += currentSpeed * CONFIG.background.parallax;
 
     if (player.state === "active") {
       runAnimFrameCounter++;
@@ -872,9 +878,20 @@
   function draw() {
     ctx.clearRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
 
-    // 背景(全種共通で白。種の違いは装飾・障害物の見た目だけで表現する)
+    // 背景(全種共通。種の違いは装飾・障害物の見た目だけで表現する)
     ctx.fillStyle = CONFIG.skyColor;
     ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+    // 遠景(山・火山)。地面の高さまでを覆うように表示し、横につなげてスクロールさせる
+    const bgImg = backgroundSpriteEntry && backgroundSpriteEntry.img;
+    if (bgImg) {
+      const bgHeight = groundY;
+      const bgWidth = bgImg.naturalWidth * (bgHeight / bgImg.naturalHeight);
+      const bgOffset = backgroundScrollX % bgWidth;
+      for (let x = -bgOffset; x < CONFIG.canvasWidth; x += bgWidth) {
+        ctx.drawImage(bgImg, x, 0, bgWidth, bgHeight);
+      }
+    }
 
     // 雲(種によらず共通。装飾よりさらにゆっくり流れる)
     ctx.fillStyle = CONFIG.clouds.color;

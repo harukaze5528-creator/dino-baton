@@ -11,6 +11,12 @@ const CONFIG = {
   // でこぼこ(草や小石の盛り上がり)は当たり判定に関係ない飾りとして扱う
   groundLineRatio: 0.25,
 
+  // 遠景(山・火山)。雲より手前・地面より奥にあるので、その中間の速さでスクロールさせる
+  background: {
+    sprite: "assets/background.png",
+    parallax: 0.4,
+  },
+
   // 効果音。volumeは0(無音)〜1(最大)。個別に音量を変えたい場合はvolumesで上書きする
   sounds: {
     volume: 0.5,
